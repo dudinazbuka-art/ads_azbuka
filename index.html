@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Журнал АДС</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css" />
+<style>
+:root {
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#0C447C;
+  --amber:#854F0B;--amber-l:#FAEEDA;
+  --green:#3B6D11;--green-l:#EAF3DE;
+  --red:#A32D2D;--red-l:#FCEBEB;
+  --gray:#444441;--gray-l:#F1EFE8;
+  --border:rgba(0,0,0,0.12);--bg:#f5f5f3;--surface:#fff;
+  --text:#1a1a18;--muted:#6b6b68;--radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.app{max-width:1380px;margin:0 auto;padding:1.5rem 1rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px}
+.topbar h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+#config-banner{background:#FAEEDA;border:1px solid #EF9F27;border-radius:var(--radius);padding:12px 16px;margin-bottom:1.25rem;font-size:13px;color:#633806;display:flex;align-items:flex-start;gap:10px}
+#config-banner.hidden{display:none}
+#config-banner i{font-size:18px;flex-shrink:0;margin-top:1px}
+#config-banner input{margin-top:8px;width:100%;padding:7px 10px;border-radius:var(--radius);border:1px solid #EF9F27;background:#fff;font-size:13px}
+#config-banner button{margin-top:8px;padding:6px 14px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;cursor:pointer;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-num{font-size:26px;font-weight:600}
+.c-blue{color:var(--blue)}.c-amber{color:var(--amber)}.c-red{color:var(--red)}.c-green{color:var(--green)}
+
+/* FILTERS */
+.filter-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:1rem}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.filter-row:last-child{margin-bottom:0}
+.filter-label{font-size:12px;color:var(--muted);white-space:nowrap;min-width:80px}
+.filter-bar select,.filter-bar input[type=date],.filter-bar input[type=text]{font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer}
+.period-presets{display:flex;gap:6px;flex-wrap:wrap}
+.preset-btn{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer}
+.preset-btn:hover,.preset-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.btn{font-size:13px;padding:7px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.primary:hover{background:var(--blue-d)}
+.btn.green{background:var(--green-l);color:var(--green);border-color:var(--green)}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden}.table-scroll{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 12px;font-weight:500;font-size:12px;color:var(--muted);border-bottom:0.5px solid var(--border);background:var(--bg);white-space:nowrap}
+tbody tr{border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s;height:36px;max-height:36px}
+tbody tr:hover{background:var(--blue-l)}
+tbody tr:last-child{border-bottom:none}
+td{padding:6px 10px;vertical-align:middle;overflow:hidden}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.b-new{background:var(--blue-l);color:var(--blue-d)}
+.b-work{background:var(--amber-l);color:var(--amber)}
+.b-done{background:var(--green-l);color:var(--green)}
+.b-overdue{background:var(--red-l);color:var(--red)}
+.b-cancel{background:var(--gray-l);color:var(--gray)}
+.src-badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:20px;border:0.5px solid var(--border);color:var(--muted);white-space:nowrap}
+.cat-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.cat-flood{background:#E6F1FB;color:#0C447C}
+.cat-nowater{background:#E8F4FF;color:#0369A1}
+.cat-noheat{background:#FEF3C7;color:#92400E}
+.cat-nopower{background:#FFF8E1;color:#854F0B}
+.cat-sewer{background:#F0FDF4;color:#166534}
+.cat-gas{background:#FEF2F2;color:#991B1B}
+.cat-lift{background:#F5F3FF;color:#5B21B6}
+.cat-frost{background:#EFF6FF;color:#1E40AF}
+.cat-leak{background:#FCE7F3;color:#9D174D}
+.cat-other{background:var(--gray-l);color:var(--gray)}
+.detail-row td{background:#fafafa;padding:12px 16px}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.dp-label{font-size:11px;color:var(--muted);margin-bottom:3px}
+.dp-val{font-size:13px}
+.detail-actions{display:flex;gap:8px;padding-top:8px;border-top:0.5px solid var(--border);margin-top:8px;align-items:center;flex-wrap:wrap}
+.detail-actions select{font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:#fff;color:var(--text)}
+.detail-row td{background:#f8f9fc;padding:0!important}
+.detail-inner{padding:14px 16px;border-top:2px solid var(--blue-l)}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.tr-open td:first-child{border-left:3px solid var(--blue)}
+tbody tr.tr-data{cursor:pointer}
+tbody tr.tr-data:hover td{background:var(--blue-l)}
+tbody tr.tr-data.tr-open td{background:var(--blue-l)}
+.detail-row{display:none}
+.detail-row.open{display:table-row}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.history-row{display:grid;grid-template-columns:130px 80px 1fr 120px;gap:0;border-bottom:0.5px solid var(--border);font-size:13px}
+.history-row:last-child{border-bottom:none}
+.history-row:hover{background:var(--blue-l)}
+.history-row>div{padding:8px 12px}
+.h-add{color:var(--green);font-weight:600}
+.h-del{color:var(--red);font-weight:600}
+.h-edit{color:var(--amber);font-weight:600}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:1.5rem;width:580px;max-width:96vw;border:0.5px solid var(--border);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:1.25rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-col{display:flex;flex-direction:column;gap:4px}
+.form-col label{font-size:12px;color:var(--muted)}
+.form-col input,.form-col select,.form-col textarea{font-size:13px;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text)}
+.form-col textarea{min-height:60px;resize:vertical}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem;border-top:0.5px solid var(--border);padding-top:1rem}
+
+/* CSV IMPORT */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all 0.2s;margin-bottom:1rem}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:var(--blue-l);color:var(--blue)}
+.drop-zone i{font-size:32px;margin-bottom:8px;display:block}
+.csv-preview{font-size:12px;max-height:200px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg);margin-bottom:1rem}
+.csv-map{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;font-size:13px}
+.csv-map select{font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)}
+.import-stats{font-size:13px;color:var(--green);margin-bottom:10px;display:none}
+
+/* REPORT */
+.report-section{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.report-section h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+.report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.report-stat{background:var(--bg);border-radius:var(--radius);padding:12px;text-align:center}
+.report-stat .num{font-size:24px;font-weight:600;color:var(--blue)}
+.report-stat .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+.report-table{width:100%;border-collapse:collapse;font-size:13px}
+.report-table th{text-align:left;padding:8px 10px;font-weight:500;font-size:12px;color:var(--muted);border-bottom:0.5px solid var(--border)}
+.report-table td{padding:8px 10px;border-bottom:0.5px solid var(--border)}
+.report-table tr:last-child td{border-bottom:none}
+
+.loader,.empty{text-align:center;padding:3rem;color:var(--muted)}
+.report-tab{font-size:13px;padding:6px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.report-tab:hover{background:var(--bg)}
+.report-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.chart-box{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+.chart-box h4{font-size:14px;font-weight:600;margin-bottom:1rem;color:var(--text)}
+.bar-wrap{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:nowrap}
+.bar-label{width:90px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}.bar-label.wrap{white-space:normal;overflow:visible;text-overflow:clip}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:18px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--blue);transition:width 0.3s}
+.bar-fill.amber{background:var(--amber)}
+.bar-fill.green{background:#27a844}
+.bar-val{width:30px;text-align:right;color:var(--muted);flex-shrink:0}
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:var(--radius);font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div id="config-banner" style="display:none">
+  <i class="ti ti-settings"></i>
+  <div>
+    <strong>Первый запуск: укажите адрес вашего Google Apps Script</strong><br>
+    Скопируйте URL веб-приложения из Apps Script и вставьте ниже.
+    <br><input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec" />
+    <br><button onclick="saveUrl()">Сохранить и подключить</button>
+  </div>
+</div>
+
+<div class="topbar">
+  <h1><i class="ti ti-file-alert" style="font-size:22px;color:var(--blue)"></i>Журнал АДС</h1>
+  <div class="topbar-actions">
+    <button class="btn" onclick="loadData()"><i class="ti ti-refresh"></i>Обновить</button>
+    <button class="btn green" onclick="openImport()"><i class="ti ti-file-import"></i>Импорт CSV</button>
+    <button class="btn" onclick="openReport()"><i class="ti ti-chart-bar"></i>Отчёт</button>
+    <button class="btn" onclick="exportCSV()"><i class="ti ti-download"></i>Экспорт CSV</button>
+    <div id="delete-bar" style="display:none;align-items:center;gap:8px;animation:fadeIn 0.15s ease">
+      <span id="selected-count" style="font-size:13px;color:var(--muted);white-space:nowrap"></span>
+      <button class="btn" style="background:var(--red-l);color:var(--red);border-color:var(--red)" onclick="deleteSelected()">
+        <i class="ti ti-trash"></i> Удалить выбранные
+      </button>
+      <button class="btn" onclick="clearSelection()" title="Снять выделение"><i class="ti ti-x"></i></button>
+    </div>
+    <button class="btn primary" onclick="openModal()"><i class="ti ti-plus"></i>Новая заявка</button>
+  </div>
+</div>
+
+<div class="stats" style="grid-template-columns:repeat(2,1fr);max-width:400px">
+  <div class="stat"><div class="stat-label">Всего заявок</div><div class="stat-num c-blue" id="s-total">—</div></div>
+  <div class="stat"><div class="stat-label">Показано (фильтр)</div><div class="stat-num c-blue" id="s-filtered">—</div></div>
+</div>
+
+<!-- ФИЛЬТРЫ -->
+<div class="filter-bar">
+  <div class="filter-row">
+    <span class="filter-label">Период:</span>
+    <div class="period-presets">
+      <button class="preset-btn" onclick="setPeriod('today')">Сегодня</button>
+      <button class="preset-btn" onclick="setPeriod('week')">Неделя</button>
+      <button class="preset-btn" onclick="setPeriod('month')">Месяц</button>
+      <button class="preset-btn" onclick="setPeriod('quarter')">Квартал</button>
+      <button class="preset-btn" onclick="setPeriod('year')">Год</button>
+      <button class="preset-btn active" onclick="setPeriod('all')">Все время</button>
+    </div>
+    <input type="date" id="fDateFrom" onchange="onManualDate()" title="С" />
+    <span style="color:var(--muted);font-size:12px">—</span>
+    <input type="date" id="fDateTo" onchange="onManualDate()" title="По" />
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Фильтры:</span>
+    <select id="fRegion" onchange="updateStreetFilter('fRegion','fStreet','fHouse');render()">
+      <option value="">Все регионы</option>
+      <option>Киров</option><option>Пермь</option><option>Ижевск</option>
+      <option>Ульяновск</option><option>Екатеринбург</option>
+    </select>
+    <select id="fStatus" onchange="render()">
+      <option value="">Все статусы</option>
+      <option>Принята</option><option>В работе</option>
+      <option>Выполнена</option><option>Просрочена</option><option>Отменена</option>
+    </select>
+    <select id="fSrc" onchange="render()">
+      <option value="">Все источники</option>
+      <option>Мажордом</option><option>Гугл таблица</option>
+      <option>Чат MAX</option><option>Ручной ввод</option><option>Импорт CSV</option>
+    </select>
+    <select id="fCat" onchange="render()" style="min-width:180px">
+      <option value="">Все категории</option>
+      <option value="flood">[вода] Затопление</option>
+      <option value="leak">[инстр] Течь/Прорыв трубы</option>
+      <option value="nowater">[нет воды] Отсутствие воды</option>
+      <option value="noheat">[темп] Отсутствие отопления</option>
+      <option value="nopower">[эл] Отсутствие электричества</option>
+      <option value="sewer">[канал] Засор канализации</option>
+      <option value="gas">[газ] Запах газа</option>
+      <option value="lift">[лифт] Аварийная остановка лифта</option>
+      <option value="frost">[мороз] Промерзание</option>
+      <option value="other">[проч] Прочее</option>
+    </select>
+    <button class="btn" onclick="clearFilters()"><i class="ti ti-x"></i>Сбросить</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Адрес:</span>
+    <select id="fStreet" onchange="updateHouseFilter();render()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:180px">
+      <option value="">Все улицы</option>
+    </select>
+    <select id="fHouse" onchange="render()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:100px">
+      <option value="">Все дома</option>
+    </select>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-scroll">
+  <table style="min-width:1150px;width:100%;table-layout:fixed">
+    <thead>
+      <tr>
+        <th style="width:36px;text-align:center"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)"></th>
+        <th style="width:78px">№</th>
+        <th style="width:105px">Дата/Время</th>
+        <th style="width:78px">Регион</th>
+        <th style="width:130px;max-width:130px">Улица</th>
+        <th style="width:46px">Дом</th>
+        <th style="width:50px">Кв./под.</th>
+        <th style="width:160px;max-width:160px">Содержание заявки</th>
+        <th style="width:140px;max-width:140px">Причина аварии</th>
+        <th style="width:95px;max-width:95px">Время устранения</th>
+        <th style="width:82px;max-width:82px">Источник</th>
+        <th style="width:118px;white-space:nowrap">Категория</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="11" class="loader">Загрузка...</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:right" id="count-label"></div>
+</div>
+
+<!-- ФОРМА ДОБАВЛЕНИЯ -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2><i class="ti ti-plus" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Новая аварийная заявка</h2>
+    <div class="form-row">
+      <div class="form-col"><label>Регион</label>
+        <select id="mRegion" onchange="onModalRegionChange()" style="font-size:13px;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text)"><option>Киров</option><option>Пермь</option><option>Ижевск</option><option>Ульяновск</option><option>Екатеринбург</option></select>
+      </div>
+      <div class="form-col"><label>АДС / исполнитель</label><input type="text" id="mAds" placeholder="Название подрядчика" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label>Улица</label>
+        <select id="mStreet" onchange="onModalStreetChange()" style="font-size:13px;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text)">
+          <option value="">— выберите улицу —</option>
+        </select>
+        <input type="text" id="mStreetCustom" placeholder="или введите вручную..." style="margin-top:6px;font-size:12px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text);width:100%" />
+      </div>
+      <div class="form-col">
+        <label>Дом</label>
+        <select id="mHouse" style="font-size:13px;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text)">
+          <option value="">— выберите дом —</option>
+        </select>
+        <input type="text" id="mHouseCustom" placeholder="или введите вручную..." style="margin-top:6px;font-size:12px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text);width:100%" />
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:-4px">
+      <div class="form-col"><label>Кв. / подъезд</label><input type="text" id="mKv" placeholder="кв. 45" /></div>
+      <div class="form-col"></div>
+    </div>
+    <div class="form-col" style="margin-bottom:12px">
+      <label>Содержание заявки</label>
+      <textarea id="mDesc" placeholder="Описание аварии..."></textarea>
+    </div>
+    <div class="form-col" style="margin-bottom:12px">
+      <label>Причина аварии</label>
+      <textarea id="mCause" placeholder="Установленная причина..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-col"><label>Источник</label>
+        <select id="mSrc"><option>Мажордом</option><option>Гугл таблица</option><option>Чат MAX</option><option>Ручной ввод</option></select>
+      </div>
+      <div class="form-col"><label>Статус</label>
+        <select id="mStatus"><option>Принята</option><option>В работе</option><option>Выполнена</option><option>Отменена</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalBg')">Отмена</button>
+      <button class="btn primary" id="save-btn" onclick="addRecord()">Сохранить заявку</button>
+    </div>
+  </div>
+</div>
+
+<!-- АВТОРИЗАЦИЯ -->
+<div class="modal-bg" id="authBg">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">👤</div>
+    <h2 style="margin-bottom:6px">Представьтесь</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:1.25rem">Ваше имя будет записано в историю действий</p>
+    <input type="text" id="authInput" placeholder="Введите имя или логин..." maxlength="40"
+      style="width:100%;font-size:15px;padding:10px 14px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);color:var(--text);margin-bottom:1rem;text-align:center"
+      onkeydown="if(event.key==='Enter')confirmAuth()" />
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn" onclick="cancelAuth()">Отмена</button>
+      <button class="btn primary" onclick="confirmAuth()"><i class="ti ti-check"></i> Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ИМПОРТ CSV -->
+<div class="modal-bg" id="importBg">
+  <div class="modal" style="width:640px">
+    <h2><i class="ti ti-file-import" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Импорт из CSV</h2>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
+      <i class="ti ti-cloud-upload"></i>
+      Перетащите CSV-файл сюда или нажмите для выбора
+      <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleFile(this.files[0])" />
+    </div>
+
+    <div id="importStats" class="import-stats"></div>
+
+    <div id="colMapping" style="display:none">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Сопоставьте столбцы CSV с полями журнала:</p>
+      <div id="mappingRows"></div>
+      <div class="csv-preview" id="csvPreview"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('importBg')">Отмена</button>
+      <button class="btn primary" id="importBtn" onclick="doImport()" style="display:none">
+        <i class="ti ti-check"></i>Импортировать
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ОТЧЁТ -->
+<div class="modal-bg" id="reportBg">
+  <div class="modal" style="width:96vw;max-width:1300px">
+    <h2><i class="ti ti-chart-bar" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Отчёт по заявкам АДС</h2>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;border-bottom:0.5px solid var(--border);padding-bottom:10px;flex-wrap:wrap">
+      <button class="report-tab active" onclick="switchTab('journal')"><i class="ti ti-table"></i> Журнал</button>
+      <button class="report-tab" onclick="switchTab('charts')"><i class="ti ti-chart-bar"></i> Графики</button>
+      <button class="report-tab" onclick="switchTab('top5')"><i class="ti ti-trophy"></i> Топ-5 домов</button>
+      <button class="report-tab" onclick="switchTab('problems')"><i class="ti ti-alert-triangle"></i> Топ проблем</button>
+      <button class="report-tab" onclick="switchTab('compare')"><i class="ti ti-git-compare"></i> Сравнение регионов</button>
+      <button class="report-tab" onclick="switchTab('history')"><i class="ti ti-history"></i> История</button>
+    </div>
+    <div id="reportContent"></div>
+    <div id="reportCharts" style="display:none"></div>
+    <div id="reportTop5" style="display:none"></div>
+    <div id="reportProblems" style="display:none"></div>
+    <div id="reportCompare" style="display:none"></div>
+    <div id="reportHistory" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="printReport()"><i class="ti ti-printer"></i>Печать</button>
+      <button class="btn" onclick="exportReportCSV()"><i class="ti ti-download"></i>Экспорт CSV</button>
+      <button class="btn primary" onclick="closeModal('reportBg')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── НАСТРОЙКИ ──
+let SCRIPT_URL = localStorage.getItem("ads_script_url") || "https://script.google.com/macros/s/AKfycbyLWwKfH8h0vP5jrkb7mgF_flolR2wZ2wgOjO3qWr4QajrKmtM8oG_tRnPL4CqHD3au/exec";
+if (SCRIPT_URL) document.getElementById("config-banner").classList.add("hidden");
+
+function saveUrl() {
+  const v = document.getElementById("script-url-input").value.trim();
+  if (!v.startsWith("https://script.google.com")) { alert("Неверный URL"); return; }
+  localStorage.setItem("ads_script_url", v);
+  SCRIPT_URL = v;
+  document.getElementById("config-banner").classList.add("hidden");
+  loadData();
+}
+
+// ── ДАННЫЕ ──
+let records = [];
+
+// ── КАТЕГОРИЗАЦИЯ ЗАЯВОК ──────────────────────────────────
+const CATEGORIES = [
+  { id:'flood',   label:'Затопление',              css:'cat-flood',   icon:'&#128167;',
+    keys:['затоплен','топит','течь','течет','течет','протечка','потоп','вода сверху','вода с потолка','мокрый потолок','капает','капает с','протекает','протекло','залив','заливает','обвис','набухл'] },
+  { id:'leak',    label:'Течь/Прорыв трубы',        css:'cat-leak',    icon:'&#128295;',
+    keys:['прорыв','прорвало','труб','лопнул','лопнула','батарея течет','радиатор течет','течет батарея','течет радиатор','кран течет','течет кран','стояк','подводки','american','американк','гибкой','полотенцесуш','течь трубы','бежит вода'] },
+  { id:'nowater', label:'Отсутствие воды',          css:'cat-nowater', icon:'&#128689;',
+    keys:['нет воды','нет гвс','нет хвс','нет горячей','нет холодной','отсутствует вода','отключили воду','воды нет','пропала вода','давление воды','нет давления','слабый напор'] },
+  { id:'noheat',  label:'Отсутствие отопления',     css:'cat-noheat',  icon:'&#127777;',
+    keys:['нет отопления','нет тепла','холодные батареи','не греют','не греет','отопление не','батареи холодные','холодно в квартире','завоздушивание','завоздушил','отопление отключ','холодная батарея','слабое отопление','батарея не греет'] },
+  { id:'nopower', label:'Отсутствие электричества', css:'cat-nopower', icon:'&#9889;',
+    keys:['нет света','нет электр','нет электричества','электричество отключ','выбило автомат','автомат выбил','нет напряжения','пропало электр','отключилось электр','сработала защита','нет освещения','свет не работает','выбивает автомат','кз','короткое замыкание'] },
+  { id:'sewer',   label:'Засор канализации',        css:'cat-sewer',   icon:'&#128701;',
+    keys:['засор','канализация','унитаз','сантехника','слив','не смывает','забило','забит','засорил','сток','канализацион','нет слива'] },
+  { id:'gas',     label:'Запах газа',               css:'cat-gas',     icon:'&#9888;',
+    keys:['газ','запах газа','газовый','утечка газа','пахнет газом'] },
+  { id:'lift',    label:'Аварийная остановка лифта',css:'cat-lift',    icon:'&#128727;',
+    keys:['лифт','застряли','застрял в лифте','лифт не работает','лифт сломался','кабина лифта'] },
+  { id:'frost',   label:'Промерзание',              css:'cat-frost',   icon:'&#10052;',
+    keys:['промерзан','промерзает','промерз','вентканал','вентиляция не','тяги нет','нет тяги','плесень','сырость','конденсат'] },
+  { id:'other',   label:'Прочее',                   css:'cat-other',   icon:'&#128203;', keys:[] },
+];
+
+function detectCategory(desc) {
+  if (!desc) return CATEGORIES[CATEGORIES.length-1];
+  const d = desc.toLowerCase();
+  for (const cat of CATEGORIES) {
+    if (cat.id === 'other') continue;
+    if (cat.keys.some(k => d.includes(k))) return cat;
+  }
+  return CATEGORIES[CATEGORIES.length-1];
+}
+
+function getCatById(id) {
+  return CATEGORIES.find(c=>c.id===id) || CATEGORIES[CATEGORIES.length-1];
+}
+
+// Синхронизация фильтров главного экрана → отчёты
+function syncFiltersToReports() {
+  const region = document.getElementById('fRegion').value;
+  const street = document.getElementById('fStreet') ? document.getElementById('fStreet').value : '';
+  const house  = document.getElementById('fHouse')  ? document.getElementById('fHouse').value  : '';
+  // Применяем в графиках
+  const cR = document.getElementById('cRegion'); if(cR && region) cR.value = region;
+  const cS = document.getElementById('cStreet'); if(cS && street) { cS.value = street; updateChartHouseFilter(); }
+  const cH = document.getElementById('cHouse');  if(cH && house)  cH.value = house;
+  // Применяем в топ-5
+  const t5R = document.getElementById('t5Region'); if(t5R && region) t5R.value = region;
+}
+let csvParsed = [];
+let csvHeaders = [];
+
+function loadData() {
+  if (!SCRIPT_URL) return;
+  document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="loader"><i class="ti ti-loader"></i> Загрузка...</td></tr>';
+  const cbName = 'adsJsonpCb_' + Date.now();
+  const script  = document.createElement('script');
+  window[cbName] = function(data) {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (Array.isArray(data)) {
+      records = data.map(normalizeRecord); populateAddressFilters(); render();
+    } else {
+      document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Ошибка загрузки данных</td></tr>';
+    }
+  };
+  script.onerror = function() {
+    delete window[cbName];
+    document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Ошибка загрузки. Убедитесь что скрипт переопубликован с доступом "Все".</td></tr>';
+  };
+  script.src = SCRIPT_URL + '?action=getAll&callback=' + cbName;
+  document.body.appendChild(script);
+  setTimeout(function() {
+    if (window[cbName]) {
+      delete window[cbName];
+      document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Таймаут загрузки. Нажмите "Обновить".</td></tr>';
+    }
+  }, 25000);
+}
+
+
+function populateAddressFilters() {
+  updateStreetFilter('fRegion','fStreet','fHouse');
+  updateStreetFilter('cRegion','cStreet','cHouse');
+  updateProbStreetFilter();
+}
+
+function getStreetsByRegion(region) {
+  const src = region ? records.filter(x=>x.region===region) : records;
+  return [...new Set(src.map(x=>(x.street||x.addr||'').trim()).filter(Boolean))].sort();
+}
+
+function getHousesByStreetAndRegion(region, street) {
+  let src = records;
+  if (region) src = src.filter(x=>x.region===region);
+  if (street) src = src.filter(x=>(x.street||x.addr||'').trim()===street);
+  return [...new Set(src.map(x=>(x.house||'').trim()).filter(Boolean))]
+    .sort((a,b)=>{ const na=parseInt(a),nb=parseInt(b); return !isNaN(na)&&!isNaN(nb)?na-nb:a.localeCompare(b,'ru'); });
+}
+
+// Парсит строку адреса вида "ул. Ленина, д.5а" → {street, house}
+// Поддерживает: д.1г, д.1/в1, д.1в/2, д.60/3, д.1г/1 и т.д.
+function parseAddrToStreetHouse(addr) {
+  if (!addr) return { street: '', house: '' };
+  addr = addr.trim();
+  // Пробуем найти номер дома после "д." или просто запятая+число
+  const m = addr.match(/,\s*(?:д\.?\s*)?(\d+[а-яёa-z\d]*(?:\/[а-яёa-z\d]+)*)/i);
+  if (m) {
+    const house = m[1].trim();
+    const street = addr.slice(0, m.index).trim().replace(/,\s*$/, '');
+    return { street, house };
+  }
+  // Нет явного разделителя — вся строка это улица
+  return { street: addr, house: '' };
+}
+
+// Нормализует запись: если есть addr но нет street/house — разбивает
+function normalizeRecord(rec) {
+  const hasStreet = rec.street && rec.street.trim();
+  const hasHouse  = rec.house  && rec.house.trim();
+  const hasAddr   = rec.addr   && rec.addr.trim();
+
+  // Случай 1: улица и дом пришли отдельными колонками
+  if (hasStreet && hasHouse && !hasAddr) {
+    rec.addr = rec.street.trim() + ', д.' + rec.house.trim();
+  }
+  // Случай 2: есть addr но нет отдельных street/house — парсим
+  if (!hasStreet && hasAddr) {
+    const parsed = parseAddrToStreetHouse(rec.addr);
+    rec.street = parsed.street;
+    rec.house  = parsed.house;
+  }
+  // Случай 3: есть street но нет house — попробовать извлечь дом из street
+  if (hasStreet && !hasHouse) {
+    const parsed = parseAddrToStreetHouse(rec.street.trim());
+    if (parsed.house) {
+      rec.street = parsed.street;
+      rec.house  = parsed.house;
+    }
+  }
+  // Случай 4: есть и addr и street, но нет house — парсим addr
+  if (hasAddr && hasStreet && !hasHouse) {
+    const parsed = parseAddrToStreetHouse(rec.addr);
+    if (parsed.house) rec.house = parsed.house;
+  }
+  return rec;
+}
+
+function updateStreetFilter(regionId, streetId, houseId) {
+  const regionEl=document.getElementById(regionId);
+  const streetEl=document.getElementById(streetId);
+  const houseEl =document.getElementById(houseId);
+  if (!streetEl) return;
+  const region=regionEl?regionEl.value:'';
+  const cur=streetEl.value;
+  streetEl.innerHTML='<option value="">Все улицы</option>'+
+    getStreetsByRegion(region).map(s=>'<option value="'+s+'"'+(s===cur?' selected':'')+'>'+s+'</option>').join('');
+  if (houseEl) {
+    const curH=houseEl.value;
+    houseEl.innerHTML='<option value="">Все дома</option>'+
+      getHousesByStreetAndRegion(region,streetEl.value).map(h=>'<option value="'+h+'"'+(h===curH?' selected':'')+'>'+h+'</option>').join('');
+  }
+}
+
+function updateHouseFilter() {
+  const region=document.getElementById('fRegion').value;
+  const street=document.getElementById('fStreet').value;
+  const el=document.getElementById('fHouse'); if(!el) return;
+  const cur=el.value;
+  el.innerHTML='<option value="">Все дома</option>'+
+    getHousesByStreetAndRegion(region,street).map(h=>'<option value="'+h+'"'+(h===cur?' selected':'')+'>'+h+'</option>').join('');
+}
+
+function updateProbStreetFilter() {
+  const region  = document.getElementById('pb5Region') ? document.getElementById('pb5Region').value : '';
+  const el      = document.getElementById('pbStreet'); if(!el) return;
+  const cur     = el.value;
+  const streets = getStreetsByRegion(region);
+  el.innerHTML  = '<option value="">Все улицы</option>' +
+    streets.map(s=>'<option value="'+s+'"'+(s===cur?' selected':'')+'>'+s+'</option>').join('');
+  updateProbHouseFilter();
+}
+
+function updateProbHouseFilter() {
+  const region = document.getElementById('pb5Region') ? document.getElementById('pb5Region').value : '';
+  const street = document.getElementById('pbStreet')  ? document.getElementById('pbStreet').value  : '';
+  const el     = document.getElementById('pbHouse');  if(!el) return;
+  const cur    = el.value;
+  const houses = getHousesByStreetAndRegion(region, street);
+  el.innerHTML = '<option value="">Все дома</option>' +
+    houses.map(h=>'<option value="'+h+'"'+(h===cur?' selected':'')+'>'+h+'</option>').join('');
+}
+
+function updateChartHouseFilter() {
+  const region=document.getElementById('cRegion')?document.getElementById('cRegion').value:'';
+  const street=document.getElementById('cStreet')?document.getElementById('cStreet').value:'';
+  const el=document.getElementById('cHouse'); if(!el) return;
+  const cur=el.value;
+  el.innerHTML='<option value="">Все дома</option>'+
+    getHousesByStreetAndRegion(region,street).map(h=>'<option value="'+h+'"'+(h===cur?' selected':'')+'>'+h+'</option>').join('');
+}
+
+// ── ПЕРИОД ──
+let periodFrom = null, periodTo = null;
+
+function setPeriod(p) {
+  document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  const now = new Date();
+  const toDate = d => d.toISOString().slice(0,10);
+
+  if (p === "all")     { periodFrom = null; periodTo = null; }
+  if (p === "today")   { periodFrom = periodTo = toDate(now); }
+  if (p === "week")    { const d = new Date(now); d.setDate(d.getDate()-6); periodFrom = toDate(d); periodTo = toDate(now); }
+  if (p === "month")   { const d = new Date(now.getFullYear(), now.getMonth(), 1); periodFrom = toDate(d); periodTo = toDate(now); }
+  if (p === "quarter") { const m = Math.floor(now.getMonth()/3)*3; const d = new Date(now.getFullYear(),m,1); periodFrom = toDate(d); periodTo = toDate(now); }
+  if (p === "year")    { periodFrom = now.getFullYear()+"-01-01"; periodTo = toDate(now); }
+
+  document.getElementById("fDateFrom").value = periodFrom || "";
+  document.getElementById("fDateTo").value   = periodTo   || "";
+  render();
+}
+
+function onManualDate() {
+  periodFrom = document.getElementById("fDateFrom").value || null;
+  periodTo   = document.getElementById("fDateTo").value   || null;
+  document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+  render();
+}
+
+// ── ПАРСИНГ ДАТЫ ──
+// Поддерживаем форматы: "27.12.2024 18:00", "2024-12-27", "27.12.2024"
+function parseDate(str) {
+  if (!str) return null;
+  str = String(str).trim();
+  // ДД.ММ.ГГГГ
+  let m = str.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  // ГГГГ-ММ-ДД
+  m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+// ── ФИЛЬТРАЦИЯ ──
+function getFiltered() {
+  const r   = document.getElementById("fRegion").value;
+  const s   = document.getElementById("fStatus").value;
+  const src = document.getElementById("fSrc").value;
+  return records.filter(x => {
+    if (r   && x.region !== r)   return false;
+    if (s   && x.status !== s)   return false;
+    if (src && x.src    !== src) return false;
+    const fCat = document.getElementById("fCat");
+    if (fCat && fCat.value) { if(detectCategory(x.desc).id !== fCat.value) return false; }
+    const fst = document.getElementById("fStreet");
+    const fhs = document.getElementById("fHouse");
+    if (fst && fst.value) { if((x.street||x.addr||'').trim() !== fst.value) return false; }
+    if (fhs && fhs.value) { if((x.house||'').trim() !== fhs.value) return false; }
+    if (periodFrom || periodTo) {
+      const d = parseDate(x.dt);
+      if (!d) return false;
+      if (periodFrom) { const f = parseDate(periodFrom); if (d < f) return false; }
+      if (periodTo)   { const t = parseDate(periodTo);   t.setHours(23,59,59); if (d > t) return false; }
+    }
+    return true;
+  });
+}
+
+// ── РЕНДЕР ──
+const STATUS_CLASS = {"Принята":"b-new","В работе":"b-work","Выполнена":"b-done","Просрочена":"b-overdue","Отменена":"b-cancel"};
+
+function render() {
+  // Перепарсить адрес у записей где house не совпадает с тем что должно быть в addr
+  records.forEach(x => {
+    if (x.addr && x.house !== undefined) {
+      const m = x.addr.match(/,\s*(?:д\.?\s*)?(\d+[а-яёa-z\d]*(?:\/[а-яёa-z\d]+)*)/i);
+      if (m && m[1] !== x.house) {
+        x.house = m[1];
+        x.street = x.addr.slice(0, m.index).trim().replace(/,\s*$/, '');
+      }
+    }
+  });
+
+  document.getElementById("s-total").textContent    = records.length;
+
+  // Сбросить чекбокс "выбрать все" и панель при каждом рендере
+  const sa = document.getElementById('selectAll');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  const delBar = document.getElementById('delete-bar');
+  if (delBar) delBar.style.display = 'none';
+
+  const rows = getFiltered();
+  document.getElementById("s-filtered").textContent = rows.length;
+  document.getElementById("count-label").textContent = rows.length !== records.length ? `Показано: ${rows.length} из ${records.length}` : `Всего: ${records.length}`;
+
+  const tb = document.getElementById("tbody");
+  if (!rows.length) { tb.innerHTML='<tr><td colspan="11" class="empty">Нет заявок по выбранным фильтрам</td></tr>'; return; }
+
+  tb.innerHTML = rows.map(x => `
+    <tr id="row-${x.id}" class="tr-data" onclick="toggleDetail('${x.id}')">
+      <td style="text-align:center;width:36px" onclick="event.stopPropagation()">
+        <input type="checkbox" class="row-cb" data-id="${x.id}" onchange="onRowCheck()" style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)">
+      </td>
+      <td style="font-weight:500">${x.id}</td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap">${x.dt}</td>
+      <td style="white-space:nowrap">${x.region||''}</td>
+      <td style="color:var(--muted);font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${x.street||x.addr||''}">${x.street||x.addr||''}</td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap;text-align:center">${x.house||''}</td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap;text-align:center;max-width:50px;overflow:hidden;text-overflow:ellipsis" title="${x.kv||''}">${x.kv||''}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${x.desc||''}">${x.desc||''}</td>
+      <td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${x.cause||''}">${x.cause||''}</td>
+      <td style="font-size:12px;color:var(--muted);max-width:95px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.note||'').replace(/.*Время устранения:\s*/i,'').split('|')[0].trim()}">${(x.note||'').replace(/.*Время устранения:\s*/i,'').split('|')[0].trim()}</td>
+      <td style="max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="src-badge">${x.src||''}</span></td>
+      <td style="white-space:nowrap"><span class="cat-badge ${detectCategory(x.desc).css}">${detectCategory(x.desc).icon} ${detectCategory(x.desc).label}</span></td>
+    </tr>
+    <tr id="dr-${x.id}" class="detail-row">
+      <td colspan="11">
+        <div class="detail-inner">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+            <div><div class="dp-label">Регион</div><div class="dp-val">${x.region||'—'}</div></div>
+            <div><div class="dp-label">Адрес</div><div class="dp-val">${x.street||x.addr||'—'}${x.house?', д.'+x.house:''}</div></div>
+            <div><div class="dp-label">Кв./подъезд</div><div class="dp-val">${x.kv||'—'}</div></div>
+            <div><div class="dp-label">Дата/Время</div><div class="dp-val">${x.dt||'—'}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div><div class="dp-label">Содержание заявки</div><div class="dp-val" style="white-space:normal">${x.desc||'—'}</div></div>
+            <div><div class="dp-label">Причина аварии / Выполнено</div><div class="dp-val" style="white-space:normal">${x.cause||'—'}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+            <div><div class="dp-label">АДС / исполнитель</div><div class="dp-val">${x.ads||'—'}</div></div>
+            <div><div class="dp-label">Источник</div><div class="dp-val">${x.src||'—'}</div></div>
+            <div><div class="dp-label">Время устранения</div><div class="dp-val">${(x.note||'').replace(/.*Время устранения:\s*/i,'').split('|')[0].trim()||'—'}</div></div>
+            <div><div class="dp-label">Примечание</div><div class="dp-val" style="white-space:normal">${(x.note||'').replace(/Время устранения:[^|]*/i,'').replace(/^\|/,'').trim()||'—'}</div></div>
+          </div>
+          <div class="detail-actions">
+            <span style="font-size:12px;color:var(--muted)">Статус:</span>
+            <select onchange="changeStatus('${x.id}', this.value); event.stopPropagation()">
+              ${['Принята','В работе','Выполнена','Просрочена','Отменена'].map(s=>'<option '+(s===x.status?'selected':'')+'>'+s+'</option>').join("")}
+            </select>
+            <span class="cat-badge ${detectCategory(x.desc).css}" style="margin-left:8px">${detectCategory(x.desc).icon} ${detectCategory(x.desc).label}</span>
+          </div>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById("dr-"+id);
+  if (!row) return;
+  const isOpen = row.classList.contains("open");
+  // Закрыть все
+  document.querySelectorAll('[id^="dr-"]').forEach(r => r.classList.remove("open"));
+  document.querySelectorAll('.tr-data').forEach(r => r.classList.remove("tr-open"));
+  // Открыть если был закрыт
+  if (!isOpen) {
+    row.classList.add("open");
+    const dataRow = document.getElementById("row-"+id);
+    if (dataRow) dataRow.classList.add("tr-open");
+  }
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-cb').forEach(c => c.checked = cb.checked);
+  updateDeleteBar();
+}
+
+function onRowCheck() {
+  const all = document.querySelectorAll('.row-cb');
+  const checked = document.querySelectorAll('.row-cb:checked');
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) {
+    selectAll.checked = all.length > 0 && checked.length === all.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+  }
+  updateDeleteBar();
+}
+
+function updateDeleteBar() {
+  const checked = document.querySelectorAll('.row-cb:checked');
+  const bar = document.getElementById('delete-bar');
+  const countEl = document.getElementById('selected-count');
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    countEl.textContent = checked.length + ' выбрано';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  document.querySelectorAll('.row-cb').forEach(c => c.checked = false);
+  const sa = document.getElementById('selectAll');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  updateDeleteBar();
+}
+
+function deleteSelected() {
+  const ids = [...document.querySelectorAll('.row-cb:checked')].map(c => c.dataset.id);
+  if (!ids.length) return;
+  if (!confirm(`Удалить ${ids.length} заявок(у)? Это действие нельзя отменить.`)) return;
+  requireUser(() => {
+  const toDelete = records.filter(x => ids.includes(x.id));
+  toDelete.forEach(x => {
+    const addrStr = (x.street||x.addr||'') + (x.house ? ', д.'+x.house : '');
+    logAction('del', `Заявка ${x.id} — ${x.region||''}, ${addrStr}, ${x.desc||'—'}`.slice(0,150));
+  });
+  records = records.filter(x => !ids.includes(x.id));
+  render();
+  updateDeleteBar();
+  showToast(`Удалено: ${ids.length} заявок`);
+  }); // end requireUser
+}
+
+async function changeStatus(id, newStatus) {
+  const rec = records.find(x=>x.id===id);
+  if (rec) {
+    logAction('edit', `Заявка ${id} — статус изменён на «${newStatus}»`);
+    rec.status = newStatus;
+  }
+  render();
+  if (!SCRIPT_URL) return;
+  try {
+    await fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"updateStatus",id,status:newStatus})});
+    showToast("Статус обновлён: "+newStatus);
+  } catch(e) { showToast("Ошибка сохранения"); }
+}
+
+// ── ДОБАВЛЕНИЕ ──
+function openModal() {
+  requireUser(() => {
+    // Сброс формы
+    ['mStreet','mHouse'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.selectedIndex = 0;
+    });
+    ['mStreetCustom','mHouseCustom','mKv','mDesc','mCause','mAds'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById("mRegion").selectedIndex = 0;
+    document.getElementById("mSrc").selectedIndex = 0;
+    document.getElementById("mStatus").selectedIndex = 0;
+    document.getElementById("modalBg").classList.add("open");
+    onModalRegionChange();
+  });
+}
+
+function onModalRegionChange() {
+  const region = document.getElementById("mRegion").value;
+  const streets = getStreetsByRegion(region);
+  const streetSel = document.getElementById("mStreet");
+  streetSel.innerHTML = '<option value="">— выберите улицу —</option>' +
+    streets.map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById("mStreetCustom").value = '';
+  document.getElementById("mHouseCustom").value = '';
+  onModalStreetChange();
+}
+
+function onModalStreetChange() {
+  const region = document.getElementById("mRegion").value;
+  const street = document.getElementById("mStreet").value;
+  const houses = getHousesByStreetAndRegion(region, street);
+  const houseSel = document.getElementById("mHouse");
+  houseSel.innerHTML = '<option value="">— выберите дом —</option>' +
+    houses.map(h => `<option value="${h}">${h}</option>`).join('');
+  document.getElementById("mHouseCustom").value = '';
+}
+
+async function addRecord() {
+  const btn = document.getElementById("save-btn");
+  btn.disabled=true; btn.textContent="Сохраняю...";
+  const mStreetSel = document.getElementById("mStreet").value;
+  const mStreetCustom = document.getElementById("mStreetCustom").value.trim();
+  const mHouseSel = document.getElementById("mHouse").value;
+  const mHouseCustom = document.getElementById("mHouseCustom").value.trim();
+  const finalStreet = mStreetCustom || mStreetSel;
+  const finalHouse = mHouseCustom || mHouseSel;
+  const rec = {
+    region: document.getElementById("mRegion").value,
+    street: finalStreet,
+    house:  finalHouse,
+    addr:   finalStreet + (finalHouse ? ', ' + finalHouse : ''),
+    kv:     document.getElementById("mKv").value,
+    desc:  document.getElementById("mDesc").value,
+    cause: document.getElementById("mCause").value,
+    status:document.getElementById("mStatus").value,
+    ads:   document.getElementById("mAds").value,
+    src:   document.getElementById("mSrc").value,
+  };
+  if (SCRIPT_URL) {
+    try {
+      await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"add",record:rec})});
+      await loadData();
+    } catch(e) { showToast("Ошибка сохранения"); }
+  } else {
+    const now=new Date(); rec.id="АДС-"+String(records.length+1).padStart(3,"0"); rec.dt=now.toLocaleString("ru-RU").slice(0,16);
+    getUser();
+    logAction('add', `Заявка ${rec.id} — ${rec.region||''}, ${rec.addr||''}, ${rec.desc||'—'}`);
+    records.unshift(rec); render();
+  }
+  btn.disabled=false; btn.textContent="Сохранить заявку";
+  closeModal("modalBg"); showToast("Заявка сохранена");
+}
+
+// ── ИМПОРТ CSV ──
+function openImport() { requireUser(() => { document.getElementById("importBg").classList.add("open"); }); }
+
+const dz = document.getElementById("dropZone");
+dz.addEventListener("dragover", e=>{e.preventDefault(); dz.classList.add("dragover");});
+dz.addEventListener("dragleave", ()=>dz.classList.remove("dragover"));
+dz.addEventListener("drop", e=>{e.preventDefault(); dz.classList.remove("dragover"); handleFile(e.dataTransfer.files[0]);});
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file, "UTF-8");
+}
+
+function parseCSV(text) {
+  // Убираем BOM
+  text = text.replace(/^\uFEFF/,"");
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  if (lines.length < 2) { showToast("Файл пустой или не распознан"); return; }
+
+  // Определяем разделитель
+  const delim = lines[0].includes(";") ? ";" : ",";
+
+  function parseLine(line) {
+    const res=[]; let cur="", inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){inQ=!inQ;}
+      else if(c===delim && !inQ){res.push(cur.trim());cur="";}
+      else cur+=c;
+    }
+    res.push(cur.trim()); return res;
+  }
+
+  csvHeaders = parseLine(lines[0]);
+  csvParsed  = lines.slice(1).map(parseLine);
+
+  // Показываем маппинг
+  const fields = ["id","dt","region","addr","street","house","kv","desc","cause","status","ads","src","note"];
+  const fieldNames = {"id":"№ заявки (ID)","dt":"Дата/Время","region":"Регион","addr":"Адрес (улица+дом)","street":"Улица (отдельно)","house":"Дом (отдельно)","kv":"Кв/Подъезд","desc":"Содержание заявки","cause":"Причина аварии","status":"Статус","ads":"АДС/Исполнитель","src":"Источник","note":"Примечание"};
+
+  // Автоматически угадываем маппинг по названию столбца
+  function guessField(header) {
+    const h = header.toLowerCase().trim();
+    // Точное совпадение английских ключей (наш формат CSV)
+    const exact = {dt:"dt", region:"region", addr:"addr", kv:"kv", desc:"desc", cause:"cause", status:"status", ads:"ads", src:"src", note:"note"};
+    if (exact[h]) return exact[h];
+    // Русские названия
+    if (h === "id" || h === "№" || h.includes("номер заявки") || h.includes("id заявки")) return "id";
+    if (h.includes("дат") || h.includes("время поступ")) return "dt";
+    if (h.includes("реги")) return "region";
+    if (h.includes("адр")) return "addr";
+    if (h === "улица" || h.includes("улиц") || h === "street") return "street";
+    if (h === "дом" || h === "номер дома" || h === "д" || h === "house") return "house";
+    if (h.includes("кв") || h.includes("подъ")) return "kv";
+    if (h.includes("содер") || h.includes("описан") || h.includes("заявк")) return "desc";
+    if (h.includes("причин") || h.includes("результ") || h.includes("осмотр")) return "cause";
+    if (h.includes("стат")) return "status";
+    if (h.includes("исполн") || h.includes("адс") || h.includes("executor")) return "ads";
+    if (h.includes("источн") || h.includes("src")) return "src";
+    if (h.includes("примеч") || h.includes("выполнен") || h.includes("note")) return "note";
+    return "";
+  }
+
+  document.getElementById("mappingRows").innerHTML = csvHeaders.map((h,i)=>`
+    <div class="csv-map">
+      <span style="color:var(--muted)">${h}</span>
+      <i class="ti ti-arrow-right" style="color:var(--border)"></i>
+      <select id="map-${i}">
+        <option value="">— пропустить —</option>
+        ${fields.map(f=>`<option value="${f}">${fieldNames[f]}</option>`).join("")}
+      </select>
+    </div>
+  `).join("");
+  // Принудительно выставляем value после рендера (selected в innerHTML ненадёжен)
+  csvHeaders.forEach((h,i) => {
+    const sel = document.getElementById("map-"+i);
+    if (sel) sel.value = guessField(h);
+  });
+
+  // Превью первых 3 строк
+  document.getElementById("csvPreview").innerHTML =
+    `<strong style="font-size:11px">Первые строки файла:</strong><br>` +
+    csvParsed.slice(0,3).map(r=>`<div style="color:var(--muted);margin-top:4px">${r.slice(0,5).join(' | ')}</div>`).join("");
+
+  document.getElementById("importStats").style.display="none";
+  document.getElementById("colMapping").style.display="block";
+  document.getElementById("importBtn").style.display="inline-flex";
+}
+
+async function doImport() {
+  const mapping = csvHeaders.map((_,i)=>document.getElementById("map-"+i).value);
+  let imported=0, skipped=0;
+  const btn = document.getElementById("importBtn");
+  btn.disabled=true; btn.textContent="Импортирую...";
+
+  for (const row of csvParsed) {
+    if (row.every(c=>!c.trim())) continue;
+    const rec = {src:"Импорт CSV", status:"Принята"};
+    mapping.forEach((field,i)=>{ if(field && row[i] !== undefined) rec[field]=row[i]; });
+    if (!rec.desc && !rec.addr && !rec.id) { skipped++; continue; }
+
+    // Принудительно перепарсить addr → street+house
+    if (rec.addr) { rec.street = ''; rec.house = ''; normalizeRecord(rec); } else { normalizeRecord(rec); }
+    if (!rec.dt) rec.dt = new Date().toLocaleString("ru-RU").slice(0,16);
+
+    // Найти существующую запись: сначала по ID, затем по dt+region+desc
+    let existIdx = rec.id ? records.findIndex(r => r.id === rec.id) : -1;
+    if (existIdx < 0 && rec.dt && rec.region && rec.desc) {
+      const newDesc = (rec.desc||'').trim().toLowerCase().slice(0,40);
+      existIdx = records.findIndex(r =>
+        r.dt === rec.dt && r.region === rec.region &&
+        (r.desc||'').trim().toLowerCase().slice(0,40) === newDesc
+      );
+    }
+    if (existIdx >= 0) {
+      rec.id = records[existIdx].id;
+      records[existIdx] = rec;
+    } else {
+      if (!rec.id) rec.id = "ИМП-"+String(records.length+1).padStart(3,"0");
+      records.push(rec);
+    }
+
+    if (SCRIPT_URL) {
+      try { await fetch(SCRIPT_URL, {method:"POST", body: JSON.stringify({action:"add", record:rec})}); } catch(e) {}
+    }
+    imported++;
+  }
+
+  const stats = document.getElementById("importStats");
+  stats.style.display="block";
+  stats.textContent = `✓ Импортировано: ${imported} записей${skipped?', пропущено: '+skipped:''}`;
+
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-check"></i>Импортировать';
+
+  if (SCRIPT_URL) {
+    await loadData();
+  } else {
+    render();
+  }
+  logAction('import', `Импортировано ${imported} записей из CSV${skipped?', пропущено: '+skipped:''}`);
+  showToast(`Импорт завершён: ${imported} записей`);
+}
+
+// ── ОТЧЁТ ──
+function openReport() {
+  syncFiltersToReports();
+  const rows = getFiltered();
+  const total = rows.length;
+
+  const regionVal   = document.getElementById("fRegion").value;
+  const regionLabel = regionVal || "Все регионы";
+  const periodLabel = periodFrom
+    ? (periodFrom===periodTo ? periodFrom : `${periodFrom} — ${periodTo||'сейчас'}`)
+    : "За всё время";
+
+  const companyMap = {
+    "Ульяновск":    "Сервисная компания Азбука Ульяновск",
+    "Ижевск":       "Сервисная компания Азбука Ижевск",
+    "Екатеринбург": "Сервисная компания Азбука Екатеринбург",
+    "Пермь":        "Сервисная компания Азбука Пермь",
+    "Киров":        "Сервисная компания Азбука",
+  };
+  const companyName = regionVal ? (companyMap[regionVal] || regionVal) : "Сервисная компания Азбука";
+
+  document.getElementById("reportContent").innerHTML = `
+    <div id="printable-report">
+      <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #185FA5;padding-bottom:1rem">
+        <div style="font-size:13px;color:#666;margin-bottom:4px">${companyName}</div>
+        <div style="font-size:20px;font-weight:700;color:#185FA5;margin-bottom:4px">Журнал аварийно-диспетчерской службы</div>
+        <div style="font-size:13px;color:#444">
+          <strong>Регион:</strong> ${regionLabel} &nbsp;|&nbsp;
+          <strong>Период:</strong> ${periodLabel} &nbsp;|&nbsp;
+          <strong>Всего заявок:</strong> ${total}
+        </div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr style="background:#185FA5;color:#fff">
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:50px">№</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:95px">Дата/Время</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:70px">Регион</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:130px">Улица</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:50px">Дом</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:50px">Кв./под.</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C">Содержание заявки</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C">Причина / Выполнено</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:80px">Время устранения</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid #0C447C;width:70px">Источник</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((x,i) => `
+              <tr style="background:${i%2===0?'#fff':'#f9fafb'};vertical-align:top">
+                <td style="padding:5px 8px;border:1px solid #ddd;font-weight:600;color:#185FA5">${x.id}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd;color:#555;white-space:nowrap">${x.dt}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.region||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.street||x.addr||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.house||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.kv||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.desc||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd;color:#555">${x.cause||''}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd;white-space:nowrap">${(x.note||'').replace(/.*Время устранения:\s*/i,'').split('|')[0].trim()}</td>
+                <td style="padding:5px 8px;border:1px solid #ddd">${x.src||''}</td>
+              </tr>`).join("")}
+        </tbody>
+      </table>
+
+      <div style="margin-top:1.5rem;display:flex;justify-content:space-between;font-size:12px;color:#666;border-top:1px solid #ddd;padding-top:1rem">
+        <span>Сформировано: ${new Date().toLocaleString('ru-RU')}</span>
+        <span>Итого записей: ${total}</span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("reportBg").classList.add("open");
+}
+
+// ── TOP-5 ДОМОВ ───────────────────────────────────────────
+let top5From = null, top5To = null, top5Region = '', top5Src = '', top5N = 5;
+
+function buildTop5() {
+  const el = document.getElementById('reportTop5');
+  el.innerHTML = `<div style="background:var(--bg);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">Период:</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="preset-btn active" onclick="setTop5Period('all',this)">Всё</button>
+        <button class="preset-btn" onclick="setTop5Period('month',this)">Месяц</button>
+        <button class="preset-btn" onclick="setTop5Period('quarter',this)">Квартал</button>
+        <button class="preset-btn" onclick="setTop5Period('year',this)">Год</button>
+      </div>
+      <input type="date" id="t5From" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+      <span style="color:var(--muted);font-size:12px">—</span>
+      <input type="date" id="t5To" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+      <select id="t5Region" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+        <option value="">Все регионы</option>
+        <option>Киров</option><option>Пермь</option><option>Ижевск</option>
+        <option>Ульяновск</option><option>Екатеринбург</option>
+      </select>
+      <select id="t5Src" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+        <option value="">Все источники</option>
+        <option>Гугл таблица</option><option>Мажордом</option><option>Импорт CSV</option><option>АДС отчёт</option>
+      </select>
+      <select id="t5Cat" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:160px">
+        <option value="">Все категории</option>
+        <option value="flood">[вода] Затопление</option><option value="leak">[инстр] Течь/Прорыв</option>
+        <option value="nowater">[нет воды] Нет воды</option><option value="noheat">[темп] Нет отопления</option>
+        <option value="nopower">[эл] Нет электричества</option><option value="sewer">[канал] Засор</option>
+        <option value="gas">[газ] Газ</option><option value="lift">[лифт] Лифт</option>
+        <option value="frost">[мороз] Промерзание</option><option value="other">[проч] Прочее</option>
+      </select>
+      <span style="font-size:12px;color:var(--muted)">Топ:</span>
+      <select id="t5N" onchange="onTop5Filter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+        <option value="3">3</option><option value="5" selected>5</option><option value="10">10</option>
+      </select>
+    </div>
+    <div id="top5Body"></div>`;
+  const mainRegion = document.getElementById('fRegion').value;
+  if (mainRegion) { const r=document.getElementById('t5Region'); if(r) r.value=mainRegion; }
+  renderTop5();
+}
+
+function setTop5Period(p, btn) {
+  document.querySelectorAll('#reportTop5 .preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const now=new Date(), toISO=d=>d.toISOString().slice(0,10);
+  if(p==='all'){top5From=null;top5To=null;}
+  if(p==='month'){top5From=toISO(new Date(now.getFullYear(),now.getMonth(),1));top5To=toISO(now);}
+  if(p==='quarter'){const m=Math.floor(now.getMonth()/3)*3;top5From=toISO(new Date(now.getFullYear(),m,1));top5To=toISO(now);}
+  if(p==='year'){top5From=now.getFullYear()+'-01-01';top5To=toISO(now);}
+  document.getElementById('t5From').value=top5From||'';
+  document.getElementById('t5To').value=top5To||'';
+  renderTop5();
+}
+
+function onTop5Filter() {
+  top5From=document.getElementById('t5From').value||null;
+  top5To=document.getElementById('t5To').value||null;
+  top5Region=document.getElementById('t5Region').value;
+  top5Src=document.getElementById('t5Src').value;
+  top5N=parseInt(document.getElementById('t5N').value)||5;
+  window._top5Cat=document.getElementById('t5Cat')?document.getElementById('t5Cat').value:'';
+  document.querySelectorAll('#reportTop5 .preset-btn').forEach(b=>b.classList.remove('active'));
+  renderTop5();
+}
+
+function renderTop5() {
+  const body=document.getElementById('top5Body'); if(!body) return;
+  const t5CatVal=window._top5Cat||'';
+  const rows=records.filter(x=>{
+    if(top5Region && x.region!==top5Region) return false;
+    if(top5Src    && x.src!==top5Src)       return false;
+    if(t5CatVal   && detectCategory(x.desc).id!==t5CatVal) return false;
+    if(top5From||top5To){const d=parseDate(x.dt);if(!d)return false;
+      if(top5From){const f=parseDate(top5From);if(d<f)return false;}
+      if(top5To){const t=parseDate(top5To);t.setHours(23,59,59);if(d>t)return false;}}
+    return true;
+  });
+  if(!rows.length){body.innerHTML='<div class="empty">Нет данных</div>';return;}
+  const regions=top5Region?[top5Region]:[...new Set(records.map(x=>x.region).filter(Boolean))].filter(r=>['Киров','Пермь','Ижевск','Ульяновск','Екатеринбург'].includes(r)||isNaN(Number(r))).sort();
+  const N=top5N;
+  const regionColors={'Киров':'#185FA5','Пермь':'#854F0B','Ижевск':'#3B6D11','Ульяновск':'#A32D2D','Екатеринбург':'#5B2D8E'};
+  const medal=['1.','2.','3.','4.','5.','6.','7.','8.','9.','10.'];
+  const regionData={};
+  rows.forEach(x=>{
+    const r=x.region||'';if(!r)return;
+    if(!regionData[r])regionData[r]={};
+    const addr=(x.street||'').trim()+(x.house?', д.'+x.house:'');
+    if(!addr||addr===', д.')return;
+    regionData[r][addr]=(regionData[r][addr]||0)+1;
+  });
+  const globalData={};
+  rows.forEach(x=>{
+    const addr=(x.street||'').trim()+(x.house?', д.'+x.house:'')+(x.region?' ('+x.region+')':'');
+    if(!addr)return;globalData[addr]=(globalData[addr]||0)+1;
+  });
+  const globalTop=Object.entries(globalData).sort((a,b)=>b[1]-a[1]).slice(0,N);
+  const periodLabel=top5From?(top5From===top5To?top5From:top5From+' — '+(top5To||'сейчас')):'За всё время';
+
+  let html='<div style="background:var(--amber-l);border-radius:var(--radius);padding:10px 16px;margin-bottom:1rem;font-size:13px;display:flex;gap:1rem;flex-wrap:wrap">'
+    +'<span> <strong>'+periodLabel+'</strong></span><span> Заявок: <strong>'+rows.length+'</strong></span><span> Топ-'+N+' по каждому региону</span></div>';
+
+  html+='<div class="chart-box" style="margin-bottom:1rem"><h4 style="margin-bottom:0.75rem"> Единый рейтинг проблемных домов</h4>';
+  globalTop.forEach(([addr,cnt],i)=>{
+    const pct=Math.round(cnt/globalTop[0][1]*100);
+    html+='<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
+      +'<span style="width:20px;font-size:14px;flex-shrink:0">'+medal[i]+'</span>'
+      +'<span style="font-size:13px;flex:1;font-weight:500;color:var(--text)">'+addr+'</span>'
+      +'<span style="font-weight:700;color:#185FA5;min-width:32px;text-align:right">'+cnt+'</span></div>'
+      +'<div style="margin-left:26px;background:var(--bg);border-radius:4px;height:10px;overflow:hidden">'
+      +'<div style="width:'+pct+'%;background:#185FA5;height:100%;border-radius:4px;opacity:'+(1-i*0.07)+'"></div></div></div>';
+  });
+  html+='</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">';
+  regions.filter(r=>regionData[r]&&Object.keys(regionData[r]).length).forEach(r=>{
+    const sorted=Object.entries(regionData[r]).sort((a,b)=>b[1]-a[1]).slice(0,N);
+    const total=Object.values(regionData[r]).reduce((a,b)=>a+b,0);
+    const max=sorted[0][1];
+    const color=regionColors[r]||'#185FA5';
+    html+='<div class="chart-box" style="border-top:3px solid '+color+'">'
+      +'<h4 style="margin-bottom:0.75rem;display:flex;justify-content:space-between"><span>'+r+'</span>'
+      +'<span style="font-size:11px;font-weight:400;color:var(--muted)">'+total+' заявок</span></h4>';
+    sorted.forEach(([addr,cnt],i)=>{
+      const pct=Math.round(cnt/max*100);
+      html+='<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
+        +'<span style="font-size:14px;width:20px">'+medal[i]+'</span>'
+        +'<span style="font-size:12px;flex:1;font-weight:500">'+addr+'</span>'
+        +'<span style="font-weight:700;color:'+color+';min-width:28px;text-align:right">'+cnt+'</span></div>'
+        +'<div style="margin-left:26px;background:var(--bg);border-radius:4px;height:8px;overflow:hidden">'
+        +'<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px;opacity:'+(1-i*0.12)+'"></div></div></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+// ── ТОП ПРОБЛЕМ ───────────────────────────────────────────
+let probFrom=null, probTo=null;
+
+function buildProblems() {
+  const el=document.getElementById('reportProblems');
+  el.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">Регион:</span>
+      <select id="pb5Region" onchange="updateProbStreetFilter();renderProblems()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+        <option value="">Все регионы</option>
+        <option>Киров</option><option>Пермь</option><option>Ижевск</option>
+        <option>Ульяновск</option><option>Екатеринбург</option>
+      </select>
+      <select id="pbStreet" onchange="updateProbHouseFilter();renderProblems()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:160px">
+        <option value="">Все улицы</option>
+      </select>
+      <select id="pbHouse" onchange="renderProblems()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:80px">
+        <option value="">Все дома</option>
+      </select>
+      <span style="font-size:12px;color:var(--muted)">Период:</span>
+      <div style="display:flex;gap:5px">
+        <button class="preset-btn active" onclick="setProbPeriod('all',this)">Всё</button>
+        <button class="preset-btn" onclick="setProbPeriod('month',this)">Месяц</button>
+        <button class="preset-btn" onclick="setProbPeriod('quarter',this)">Квартал</button>
+        <button class="preset-btn" onclick="setProbPeriod('year',this)">Год</button>
+      </div>
+      <input type="date" id="pbFrom" onchange="onProbFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+      <span style="color:var(--muted);font-size:12px">—</span>
+      <input type="date" id="pbTo" onchange="onProbFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+    </div>
+    <div id="problemsBody"></div>`;
+  const mainRegion=document.getElementById('fRegion').value;
+  const mainStreet=document.getElementById('fStreet')?document.getElementById('fStreet').value:'';
+  const mainHouse=document.getElementById('fHouse')?document.getElementById('fHouse').value:'';
+  const pbR=document.getElementById('pb5Region');if(pbR&&mainRegion)pbR.value=mainRegion;
+  updateProbStreetFilter();
+  const pbS=document.getElementById('pbStreet');if(pbS&&mainStreet)pbS.value=mainStreet;
+  updateProbHouseFilter();
+  const pbH=document.getElementById('pbHouse');if(pbH&&mainHouse)pbH.value=mainHouse;
+  renderProblems();
+}
+
+function setProbPeriod(p,btn){
+  document.querySelectorAll('#reportProblems .preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const now=new Date(),toISO=d=>d.toISOString().slice(0,10);
+  if(p==='all'){probFrom=null;probTo=null;}
+  if(p==='month'){probFrom=toISO(new Date(now.getFullYear(),now.getMonth(),1));probTo=toISO(now);}
+  if(p==='quarter'){const m=Math.floor(now.getMonth()/3)*3;probFrom=toISO(new Date(now.getFullYear(),m,1));probTo=toISO(now);}
+  if(p==='year'){probFrom=now.getFullYear()+'-01-01';probTo=toISO(now);}
+  const f=document.getElementById('pbFrom');if(f)f.value=probFrom||'';
+  const t=document.getElementById('pbTo');if(t)t.value=probTo||'';
+  renderProblems();
+}
+
+function onProbFilter(){
+  probFrom=document.getElementById('pbFrom').value||null;
+  probTo=document.getElementById('pbTo').value||null;
+  document.querySelectorAll('#reportProblems .preset-btn').forEach(b=>b.classList.remove('active'));
+  renderProblems();
+}
+
+// ── СРАВНЕНИЕ РЕГИОНОВ ────────────────────────────────────
+function renderProblems() {
+  const body = document.getElementById('problemsBody');
+  if (!body) return;
+
+  const region  = document.getElementById('pb5Region') ? document.getElementById('pb5Region').value : '';
+  const pbStreet= document.getElementById('pbStreet')  ? document.getElementById('pbStreet').value  : '';
+  const pbHouse = document.getElementById('pbHouse')   ? document.getElementById('pbHouse').value   : '';
+
+  const rows = records.filter(x => {
+    if (region   && x.region !== region)                       return false;
+    if (pbStreet && (x.street||x.addr||'').trim() !== pbStreet) return false;
+    if (pbHouse  && (x.house||'').trim() !== pbHouse)           return false;
+    if (probFrom || probTo) {
+      const d = parseDate(x.dt); if (!d) return false;
+      if (probFrom) { const f=parseDate(probFrom); if(d<f) return false; }
+      if (probTo)   { const t=parseDate(probTo); t.setHours(23,59,59); if(d>t) return false; }
+    }
+    return true;
+  });
+
+  if (!rows.length) { body.innerHTML='<div class="empty">Нет данных</div>'; return; }
+
+  const regions = region ? [region] : [...new Set(records.map(x=>x.region).filter(Boolean))].filter(r=>['Киров','Пермь','Ижевск','Ульяновск','Екатеринбург'].includes(r)||isNaN(Number(r))).sort();
+  const regionColors = {'Киров':'#185FA5','Пермь':'#854F0B','Ижевск':'#3B6D11','Ульяновск':'#A32D2D','Екатеринбург':'#5B2D8E'};
+  const total = rows.length;
+
+  // Глобальный рейтинг
+  const globalCats = {};
+  rows.forEach(x => {
+    const cat = detectCategory(x.desc);
+    if (!globalCats[cat.id]) globalCats[cat.id] = {label:cat.label,icon:cat.icon,css:cat.css,id:cat.id,count:0};
+    globalCats[cat.id].count++;
+  });
+  const globalSorted = Object.values(globalCats).sort((a,b)=>b.count-a.count);
+  const globalMax = globalSorted[0]?.count || 1;
+
+  // По регионам
+  const regionCats = {};
+  rows.forEach(x => {
+    const r=x.region||''; if(!r) return;
+    if(!regionCats[r]) regionCats[r]={};
+    const cat=detectCategory(x.desc);
+    if(!regionCats[r][cat.id]) regionCats[r][cat.id]={label:cat.label,icon:cat.icon,css:cat.css,id:cat.id,count:0};
+    regionCats[r][cat.id].count++;
+  });
+
+  // Сохраняем для toggleCatDetailById
+  const catRows = {};
+  rows.forEach(x => {
+    const cat = detectCategory(x.desc);
+    if (!catRows[cat.id]) catRows[cat.id] = [];
+    catRows[cat.id].push(x);
+  });
+  window._probCatRows = catRows;
+  window._catDetailMap = window._catDetailMap || {};
+
+  // Сбрасываем loaded у всех detail-divов
+  body.querySelectorAll('[data-loaded]').forEach(el => { el.removeAttribute('data-loaded'); el.style.display='none'; });
+
+  const periodLabel = probFrom ? (probFrom===probTo?probFrom:probFrom+' — '+(probTo||'сейчас')) : 'За всё время';
+
+  let html = '<div style="background:var(--amber-l);border-radius:var(--radius);padding:10px 16px;margin-bottom:1rem;font-size:13px;display:flex;gap:1.5rem;flex-wrap:wrap">'
+    + '<span> <strong>'+periodLabel+'</strong></span>'
+    + '<span> Заявок: <strong>'+total+'</strong></span>'
+    + (region ? '<span> <strong>'+region+'</strong></span>' : '')
+    + '</div>';
+
+  // Глобальный рейтинг
+  html += '<div class="chart-box" style="margin-bottom:1rem"><h4 style="margin-bottom:1rem"> Общий рейтинг проблем '
+    + (region ? '— '+region : 'по всем регионам')
+    + ' <span style="font-size:11px;font-weight:400;color:var(--muted)">нажмите на строку чтобы увидеть заявки</span></h4>';
+
+  globalSorted.forEach(cat => {
+    const divId = 'pd-global-' + cat.id;
+    window._catDetailMap[divId] = {catId: cat.id, region: ''};
+    const barPct = Math.round(cat.count/globalMax*100);
+    const pct    = Math.round(cat.count/total*100);
+    html += '<div style="margin-bottom:6px;border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border)">'
+      + '<div class="prob-row" data-did="'+divId+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:var(--surface)">'
+      + '<span style="font-size:18px;width:26px;flex-shrink:0">'+cat.icon+'</span>'
+      + '<span class="cat-badge '+cat.css+'" style="font-size:12px;flex-shrink:0">'+cat.label+'</span>'
+      + '<div style="flex:1;margin:0 8px"><div style="background:var(--bg);border-radius:4px;height:8px;overflow:hidden">'
+      + '<div style="width:'+barPct+'%;height:100%;border-radius:4px;background:#185FA5;opacity:0.65"></div></div></div>'
+      + '<span style="font-size:14px;font-weight:700;min-width:32px;text-align:right">'+cat.count+'</span>'
+      + '<span style="font-size:12px;color:var(--muted);width:40px;text-align:right">'+pct+'%</span>'
+      + '<span style="font-size:12px;color:var(--muted);margin-left:4px" id="'+divId+'-arrow">▼</span>'
+      + '</div>'
+      + '<div id="'+divId+'" style="display:none;border-top:0.5px solid var(--border)"></div>'
+      + '</div>';
+  });
+  html += '</div>';
+
+  // Региональные блоки
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">';
+  regions.filter(r=>regionCats[r]).forEach(r => {
+    const cats    = Object.values(regionCats[r]).sort((a,b)=>b.count-a.count).slice(0,5);
+    const regTotal= Object.values(regionCats[r]).reduce((s,c)=>s+c.count,0);
+    const regMax  = cats[0]?.count || 1;
+    const color   = regionColors[r] || '#185FA5';
+    html += '<div class="chart-box" style="border-top:3px solid '+color+'">'
+      + '<h4 style="margin-bottom:0.75rem;display:flex;justify-content:space-between">'
+      + '<span>'+r+'</span><span style="font-size:11px;font-weight:400;color:var(--muted)">'+regTotal+' заявок</span></h4>';
+    cats.forEach(cat => {
+      const divId = 'pd-'+r.replace(/\s/g,'')+'-'+cat.id;
+      window._catDetailMap[divId] = {catId: cat.id, region: r};
+      const barPct = Math.round(cat.count/regMax*100);
+      const pct    = Math.round(cat.count/regTotal*100);
+      html += '<div style="margin-bottom:6px;border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border)">'
+        + '<div class="prob-row" data-did="'+divId+'" style="display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;background:var(--surface)">'
+        + '<span style="font-size:14px">'+cat.icon+'</span>'
+        + '<span style="font-size:12px;flex:1;font-weight:500">'+cat.label+'</span>'
+        + '<span style="font-weight:700;color:'+color+';min-width:28px;text-align:right">'+cat.count+'</span>'
+        + '<span style="font-size:11px;color:var(--muted);width:36px;text-align:right">'+pct+'%</span>'
+        + '<span style="font-size:11px;color:var(--muted)" id="'+divId+'-arrow">▼</span>'
+        + '</div>'
+        + '<div style="background:var(--bg);height:4px;overflow:hidden">'
+        + '<div style="width:'+barPct+'%;background:'+color+';height:100%"></div></div>'
+        + '<div id="'+divId+'" style="display:none;border-top:0.5px solid var(--border)"></div>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  body.innerHTML = html;
+}
+
+function buildCompare() {
+  const el=document.getElementById('reportCompare');
+  el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;background:var(--bg);padding:12px 16px;border-radius:var(--radius-lg)">
+      <span style="font-size:12px;color:var(--muted);align-self:center">Вид:</span>
+      <button class="preset-btn active" onclick="setCompareView('table',this)">Таблица</button>
+      <button class="preset-btn" onclick="setCompareView('heat',this)">Тепловая карта</button>
+      <button class="preset-btn" onclick="setCompareView('trend',this)">Тренд</button>
+    </div>
+    <div id="compareBody"></div>`;
+
+  const rows=records;
+  const KNOWN_REGIONS2=['Киров','Пермь','Ижевск','Ульяновск','Екатеринбург'];
+  const regions=[...new Set(rows.map(x=>x.region).filter(Boolean))].filter(r=>KNOWN_REGIONS2.includes(r)||isNaN(Number(r))).sort();
+  const months=[...new Set(rows.map(x=>{
+    const d=parseDate(x.dt);if(!d)return null;
+    const y=d.getFullYear();if(y<2020||y>2030)return null;
+    return y+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }).filter(Boolean))].sort();
+  const matrix={};
+  regions.forEach(r=>{matrix[r]={};months.forEach(m=>matrix[r][m]=0);});
+  rows.forEach(x=>{
+    const d=parseDate(x.dt);if(!d)return;
+    const y=d.getFullYear();if(y<2020||y>2030)return;
+    const m=y+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(matrix[x.region])matrix[x.region][m]=(matrix[x.region][m]||0)+1;
+  });
+  const regionTotal={};
+  regions.forEach(r=>{regionTotal[r]=Object.values(matrix[r]).reduce((a,b)=>a+b,0);});
+  window._compareMatrix=matrix;
+  window._compareRegions=regions;
+  window._compareMonths=months;
+  window._regionColors=Object.fromEntries(regions.map((r,i)=>[r,['#185FA5','#854F0B','#3B6D11','#A32D2D','#5B2D8E'][i%5]]));
+  window._regionTotal=regionTotal;
+  renderCompareView('table');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.report-tab').forEach(b => b.classList.remove('active'));
+  event.target.closest('.report-tab').classList.add('active');
+  ['reportContent','reportCharts','reportTop5','reportCompare','reportProblems','reportHistory'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  if (tab === 'journal') {
+    document.getElementById('reportContent').style.display = '';
+  } else if (tab === 'charts') {
+    document.getElementById('reportCharts').style.display = '';
+    buildCharts();
+  } else if (tab === 'top5') {
+    document.getElementById('reportTop5').style.display = '';
+    buildTop5();
+  } else if (tab === 'compare') {
+    document.getElementById('reportCompare').style.display = '';
+    buildCompare();
+  } else if (tab === 'problems') {
+    document.getElementById('reportProblems').style.display = '';
+    buildProblems();
+  } else if (tab === 'history') {
+    document.getElementById('reportHistory').style.display = '';
+    buildHistory();
+  }
+}
+
+// Состояние фильтров графиков (независимые от основных)
+let chartRegion = '', chartFrom = null, chartTo = null;
+
+function buildCharts() {
+  // Рендерим панель фильтров один раз
+  const panel = document.getElementById('chartFilters');
+  if (!panel) {
+    document.getElementById('reportCharts').innerHTML = `
+      <div id="chartFilters" style="background:var(--bg);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">Город:</span>
+        <select id="cRegion" onchange="updateStreetFilter('cRegion','cStreet','cHouse');onChartFilter()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+          <option value="">Все регионы</option>
+          <option>Киров</option><option>Пермь</option><option>Ижевск</option>
+          <option>Ульяновск</option><option>Екатеринбург</option>
+        </select>
+        <select id="cStreet" onchange="updateChartHouseFilter();onChartFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);min-width:160px">
+          <option value="">Все улицы</option>
+        </select>
+        <select id="cHouse" onchange="onChartFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--border);border:0.5px solid var(--border);background:var(--surface);min-width:80px">
+          <option value="">Все дома</option>
+        </select>
+        <span style="font-size:12px;color:var(--muted);margin-left:8px">Период:</span>
+        <div class="period-presets" style="display:flex;gap:5px">
+          <button class="preset-btn active" onclick="setChartPeriod('all',this)">Всё</button>
+          <button class="preset-btn" onclick="setChartPeriod('week',this)">Неделя</button>
+          <button class="preset-btn" onclick="setChartPeriod('month',this)">Месяц</button>
+          <button class="preset-btn" onclick="setChartPeriod('quarter',this)">Квартал</button>
+          <button class="preset-btn" onclick="setChartPeriod('year',this)">Год</button>
+        </div>
+        <input type="date" id="cFrom" onchange="onChartFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+        <span style="color:var(--muted);font-size:12px">—</span>
+        <input type="date" id="cTo" onchange="onChartFilter()" style="font-size:12px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface)">
+      </div>
+      <div id="chartBody"></div>`;
+  }
+  renderCharts();
+}
+
+function setChartPeriod(p, btn) {
+  document.querySelectorAll('#chartFilters .preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const now = new Date();
+  const toISO = d => d.toISOString().slice(0,10);
+  if (p==='all')     { chartFrom=null; chartTo=null; }
+  if (p==='week')    { const d=new Date(now); d.setDate(d.getDate()-6); chartFrom=toISO(d); chartTo=toISO(now); }
+  if (p==='month')   { chartFrom=toISO(new Date(now.getFullYear(),now.getMonth(),1)); chartTo=toISO(now); }
+  if (p==='quarter') { const m=Math.floor(now.getMonth()/3)*3; chartFrom=toISO(new Date(now.getFullYear(),m,1)); chartTo=toISO(now); }
+  if (p==='year')    { chartFrom=now.getFullYear()+'-01-01'; chartTo=toISO(now); }
+  document.getElementById('cFrom').value = chartFrom||'';
+  document.getElementById('cTo').value   = chartTo||'';
+  renderCharts();
+}
+
+let chartStreet = '', chartHouse = '';
+
+function onChartFilter() {
+  chartRegion = document.getElementById('cRegion').value;
+  chartFrom   = document.getElementById('cFrom').value || null;
+  chartTo     = document.getElementById('cTo').value   || null;
+  chartStreet = document.getElementById('cStreet') ? document.getElementById('cStreet').value : '';
+  chartHouse  = document.getElementById('cHouse')  ? document.getElementById('cHouse').value  : '';
+  document.querySelectorAll('#chartFilters .preset-btn').forEach(b=>b.classList.remove('active'));
+  renderCharts();
+}
+
+function getChartRows() {
+  return records.filter(x => {
+    if (chartRegion && x.region !== chartRegion) return false;
+    if (chartStreet) { if((x.street||x.addr||'').trim() !== chartStreet) return false; }
+    if (chartHouse)  { if((x.house||'').trim() !== chartHouse) return false; }
+    if (chartFrom || chartTo) {
+      const d = parseDate(x.dt);
+      if (!d) return false;
+      if (chartFrom) { const f=parseDate(chartFrom); if(d<f) return false; }
+      if (chartTo)   { const t=parseDate(chartTo); t.setHours(23,59,59); if(d>t) return false; }
+    }
+    return true;
+  });
+}
+
+function renderCharts() {
+  const rows = getChartRows();
+  const body = document.getElementById('chartBody');
+  if (!body) return;
+
+  if (!rows.length) {
+    body.innerHTML = '<div class="empty">Нет данных по выбранным фильтрам</div>';
+    return;
+  }
+
+  // По городам
+  const byCity = {};
+  rows.forEach(x => { byCity[x.region]=(byCity[x.region]||0)+1; });
+
+  // По дням недели Пн–Вс
+  const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const byDay = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+  rows.forEach(x => { const d=parseDate(x.dt); if(d) byDay[d.getDay()]++; });
+  const byDayOrdered = {};
+  [1,2,3,4,5,6,0].forEach(d => { byDayOrdered[dayNames[d]]=byDay[d]; });
+
+  // По времени суток
+  const timeBlocks = {'00–04':0,'04–08':0,'08–12':0,'12–16':0,'16–20':0,'20–24':0};
+  rows.forEach(x => {
+    if (!x.dt || !x.dt.includes(' ')) return;
+    const h = parseInt(x.dt.split(' ')[1]);
+    if (isNaN(h)) return;
+    if (h<4) timeBlocks['00–04']++;
+    else if (h<8)  timeBlocks['04–08']++;
+    else if (h<12) timeBlocks['08–12']++;
+    else if (h<16) timeBlocks['12–16']++;
+    else if (h<20) timeBlocks['16–20']++;
+    else           timeBlocks['20–24']++;
+  });
+
+  // По месяцам (фильтруем невалидные даты — год должен быть 2020–2030)
+  const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  const byMonth = {};
+  rows.forEach(x => {
+    const d=parseDate(x.dt); if(!d) return;
+    const y = d.getFullYear();
+    if (y < 2020 || y > 2030) return; // пропускаем некорректные годы
+    const key = y+'-'+String(d.getMonth()+1).padStart(2,'0');
+    byMonth[key]=(byMonth[key]||0)+1;
+  });
+  const byMonthLabeled = {};
+  Object.keys(byMonth).sort().forEach(k => {
+    const [y,m] = k.split('-');
+    byMonthLabeled[monthNames[+m-1]+' '+y] = byMonth[k];
+  });
+
+  function barChart(data, colorClass='') {
+    const max = Math.max(...Object.values(data), 1);
+    const total = Object.values(data).reduce((a,b)=>a+b,0);
+    return Object.entries(data).map(([label, val]) => `
+      <div class="bar-row">
+        <span class="bar-label" title="${label}">${label}</span>
+        <div class="bar-track">
+          <div class="bar-fill ${colorClass}" style="width:${Math.round(val/max*100)}%"></div>
+        </div>
+        <span class="bar-val">${val}</span>
+        <span style="font-size:11px;color:var(--muted);width:36px">${total?Math.round(val/total*100)+'%':''}</span>
+      </div>`).join('');
+  }
+
+  // Пик времени
+  const peakTime = Object.entries(timeBlocks).sort((a,b)=>b[1]-a[1])[0];
+  const peakDay  = Object.entries(byDayOrdered).sort((a,b)=>b[1]-a[1])[0];
+  const peakCity = Object.entries(byCity).sort((a,b)=>b[1]-a[1])[0];
+
+
+  body.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
+      <div style="background:var(--blue-l);border-radius:var(--radius);padding:10px 16px;font-size:13px;flex:1;min-width:120px">
+        <div style="font-size:11px;color:var(--muted)">Всего заявок</div>
+        <div style="font-size:22px;font-weight:700;color:var(--blue)">${rows.length}</div>
+      </div>
+      <div style="background:var(--amber-l);border-radius:var(--radius);padding:10px 16px;font-size:13px;flex:1;min-width:120px">
+        <div style="font-size:11px;color:var(--muted)">Пиковый день</div>
+        <div style="font-size:22px;font-weight:700;color:var(--amber)">${peakDay[0]} <span style="font-size:13px">(${peakDay[1]})</span></div>
+      </div>
+      <div style="background:var(--red-l);border-radius:var(--radius);padding:10px 16px;font-size:13px;flex:1;min-width:120px">
+        <div style="font-size:11px;color:var(--muted)">Пиковое время</div>
+        <div style="font-size:22px;font-weight:700;color:var(--red)">${peakTime[0]} <span style="font-size:13px">(${peakTime[1]})</span></div>
+      </div>
+      <div style="background:var(--green-l);border-radius:var(--radius);padding:10px 16px;font-size:13px;flex:1;min-width:120px">
+        <div style="font-size:11px;color:var(--muted)">Лидер по заявкам</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">${peakCity[0]} <span style="font-size:13px">(${peakCity[1]})</span></div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>По городам</h4>
+        <div class="bar-wrap">${barChart(byCity,'green')}</div>
+      </div>
+      <div class="chart-box">
+        <h4>По дням недели</h4>
+        <div class="bar-wrap">${barChart(byDayOrdered,'amber')}</div>
+      </div>
+      <div class="chart-box">
+        <h4>По времени суток</h4>
+        <div class="bar-wrap">${barChart(timeBlocks)}</div>
+      </div>
+      <div class="chart-box" style="grid-column:1/-1">
+        <h4>Динамика по месяцам</h4>
+        <div class="bar-wrap">${barChart(byMonthLabeled)}</div>
+      </div>
+    </div>
+  `;
+}
+
+
+
+function toggleCatDetailById(divId) {
+  const el  = document.getElementById(divId);
+  const arr = document.getElementById(divId + '-arrow');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  if (open) {
+    el.style.display = 'none';
+    if (arr) arr.textContent = '▼';
+    return;
+  }
+  if (!el.dataset.loaded) {
+    const info = window._catDetailMap[divId] || {};
+    const src  = window._probCatRows || {};
+    const all  = info.region
+      ? (src[info.catId]||[]).filter(x=>x.region===info.region)
+      : (src[info.catId]||[]);
+    const list = all.slice(0,50);
+    if (!list.length) {
+      el.innerHTML = '<div style="padding:0.75rem 1rem;color:var(--muted);font-size:13px">Нет заявок по данным фильтрам</div>';
+    } else {
+      let html = '<div style="overflow-x:auto;max-height:320px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+        + '<thead style="position:sticky;top:0;background:var(--bg)"><tr>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Дата</th>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Регион</th>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Адрес</th>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Кв.</th>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Содержание</th>'
+        + '<th style="padding:6px 8px;border-bottom:1px solid var(--border)">Причина</th>'
+        + '</tr></thead><tbody>';
+      list.forEach((x,i) => {
+        const bg = i%2 ? 'var(--bg)' : 'var(--surface)';
+        html += '<tr style="background:'+bg+'">'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap;color:var(--muted)">'+(x.dt||'')+'</td>'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border)">'+(x.region||'')+'</td>'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border)">'+(x.addr||'')+'</td>'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border);color:var(--muted)">'+(x.kv||'')+'</td>'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border);max-width:260px">'+(x.desc||'')+'</td>'
+          + '<td style="padding:5px 8px;border-bottom:0.5px solid var(--border);color:var(--muted);max-width:200px">'+(x.cause||'')+'</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+      if (all.length > 50) html += '<div style="padding:6px 8px;font-size:11px;color:var(--muted)">Показано 50 из '+all.length+'</div>';
+      html += '</div>';
+      el.innerHTML = html;
+    }
+    el.dataset.loaded = '1';
+  }
+  el.style.display = '';
+  if (arr) arr.textContent = '▲';
+}
+
+function setCompareView(view, btn) {
+  document.querySelectorAll('#reportCompare .preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCompareView(view);
+}
+
+function renderCompareView(view) {
+  const body = document.getElementById('compareBody');
+  if (!body) return;
+  const matrix  = window._compareMatrix  || {};
+  const regions  = window._compareRegions || [];
+  const months   = window._compareMonths  || [];
+  const colors   = window._regionColors   || {};
+  const totals   = window._regionTotal    || {};
+  const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  const last12   = months.slice(-12);
+  const maxTotal = Math.max(...Object.values(totals), 1);
+
+  // Итого за последние 12 мес
+  const tot12 = {};
+  regions.forEach(r => { tot12[r] = last12.reduce((s,m)=>s+(matrix[r][m]||0),0); });
+
+  if (view === 'table') {
+    const maxTot12 = Math.max(...regions.map(r=>tot12[r]),1);
+    const headerCells = regions.map(r=>`<th style="padding:10px 14px;border:none;border-bottom:2px solid ${colors[r]};color:${colors[r]};background:var(--bg);white-space:nowrap;font-size:12px;font-weight:600;text-align:center">${r}</th>`).join('');
+    const tableRows = last12.map((m,rowIdx) => {
+      const [y,mo] = m.split('-');
+      const label = monthNames[+mo-1]+' '+y;
+      const vals  = regions.map(r => matrix[r][m]||0);
+      const rowMax = Math.max(...vals, 1);
+      const cells = regions.map((r,i) => {
+        const v = vals[i];
+        const intensity = v/rowMax;
+        const bg = v>0 ? `rgba(24,95,165,${0.06+intensity*0.18})` : 'transparent';
+        return `<td style="padding:7px 14px;border:none;border-bottom:0.5px solid var(--border);text-align:center;background:${bg};font-weight:${v===rowMax&&v>0?'700':'400'};color:${v>0?colors[r]:'#ccc'};font-size:13px">${v||'—'}</td>`;
+      }).join('');
+      const rowBg = rowIdx%2===0 ? 'background:var(--surface)' : 'background:#fafaf8';
+      return `<tr style="${rowBg}"><td style="padding:7px 14px;border:none;border-bottom:0.5px solid var(--border);white-space:nowrap;color:var(--muted);font-size:12px;font-weight:500">${label}</td>${cells}</tr>`;
+    }).join('');
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.25rem">
+        ${regions.map(r=>`
+          <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;border-top:3px solid ${colors[r]};position:relative;overflow:hidden">
+            <div style="position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;background:${colors[r]};opacity:0.05;transform:translate(20px,-20px)"></div>
+            <div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">${r}</div>
+            <div style="font-size:28px;font-weight:800;color:${colors[r]};line-height:1">${totals[r]}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">за 12 мес: <b style="color:${colors[r]}">${tot12[r]}</b></div>
+            <div style="margin-top:8px;background:var(--bg);border-radius:4px;height:3px;overflow:hidden">
+              <div style="width:${Math.round(tot12[r]/maxTot12*100)}%;background:${colors[r]};height:3px;border-radius:4px"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;text-align:right">${Math.round(tot12[r]/maxTot12*100)}% от макс.</div>
+          </div>`).join('')}
+      </div>
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px;font-weight:600">Помесячное сравнение</span>
+          <span style="font-size:11px;color:var(--muted)">(последние 12 мес.)</span>
+        </div>
+        <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr><th style="padding:10px 14px;border:none;border-bottom:0.5px solid var(--border);background:var(--bg);text-align:left;font-size:12px;color:var(--muted)">Месяц</th>${headerCells}</tr></thead>
+          <tbody>${tableRows}</tbody>
+          <tfoot><tr style="background:var(--bg)">
+            <td style="padding:9px 14px;border:none;border-top:1.5px solid var(--border);font-weight:600;font-size:12px">Итого 12 мес.</td>
+            ${regions.map(r=>`<td style="padding:9px 14px;border:none;border-top:1.5px solid var(--border);text-align:center;font-weight:800;color:${colors[r]};font-size:14px">${tot12[r]}</td>`).join('')}
+          </tr></tfoot>
+        </table></div>
+      </div>`;
+
+  } else if (view === 'heat') {
+    // Тепловая карта: строки = месяцы, столбцы = регионы, цвет = интенсивность
+    const allVals = last12.flatMap(m=>regions.map(r=>matrix[r][m]||0));
+    const heatMax = Math.max(...allVals, 1);
+    const rows2 = last12.map(m => {
+      const [y,mo] = m.split('-');
+      const cells = regions.map(r => {
+        const v = matrix[r][m]||0;
+        const pct = v/heatMax;
+        const alpha = 0.1 + pct*0.85;
+        const textColor = pct > 0.5 ? '#fff' : colors[r];
+        return `<td style="padding:10px 8px;text-align:center;border:2px solid var(--surface);background:${v?'rgba(24,95,165,'+alpha+')':'var(--bg)'};color:${textColor};font-weight:${v>0?600:400};border-radius:4px;cursor:default" title="${r}: ${v} заявок">${v||'·'}</td>`;
+      }).join('');
+      return `<tr><td style="padding:8px 10px;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:500">${monthNames[+mo-1]+' '+y}</td>${cells}</tr>`;
+    }).join('');
+    body.innerHTML = `
+      <div class="chart-box">
+        <h4 style="margin-bottom:1rem">[темп] Тепловая карта заявок — тёмнее = больше заявок</h4>
+        <div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:3px;font-size:13px">
+          <thead><tr>
+            <th style="padding:8px 10px;text-align:left;font-size:12px;color:var(--muted)">Месяц</th>
+            ${regions.map(r=>`<th style="padding:8px 10px;color:${colors[r]};white-space:nowrap;font-size:12px">${r}</th>`).join('')}
+          </tr></thead>
+          <tbody>${rows2}</tbody>
+        </table></div>
+        <div style="margin-top:0.75rem;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)">
+          <span>Меньше</span>
+          ${[0.1,0.3,0.5,0.7,0.9].map(a=>`<div style="width:20px;height:14px;border-radius:3px;background:rgba(24,95,165,${a})"></div>`).join('')}
+          <span>Больше</span>
+        </div>
+      </div>`;
+
+  } else if (view === 'trend') {
+    // Линейный тренд — SVG спарклайны
+    const w=300, h=60, pad=4;
+    function sparkline(region) {
+      const vals = last12.map(m=>matrix[region][m]||0);
+      const max = Math.max(...vals, 1);
+      const points = vals.map((v,i)=>`${pad+i*(w-pad*2)/(vals.length-1||1)},${h-pad-(v/max)*(h-pad*2)}`).join(' ');
+      const area = `${pad},${h-pad} ${points} ${pad+((vals.length-1)*(w-pad*2)/(vals.length-1||1))},${h-pad}`;
+      const color = colors[region];
+      // Линейный тренд
+      const n=vals.length, sumX=vals.reduce((_,__,i)=>_+i,0), sumY=vals.reduce((a,b)=>a+b,0);
+      const sumXY=vals.reduce((a,v,i)=>a+i*v,0), sumX2=vals.reduce((a,_,i)=>a+i*i,0);
+      const slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX||1);
+      const intercept=(sumY-slope*sumX)/n;
+      const tx1=pad, ty1=h-pad-(intercept/max)*(h-pad*2);
+      const tx2=pad+(n-1)*(w-pad*2)/(n-1||1), ty2=h-pad-((intercept+slope*(n-1))/max)*(h-pad*2);
+      const trendUp = slope >= 0;
+      return {points, area, slope, intercept, trendUp, tx1, ty1, tx2, ty2, vals, max};
+    }
+
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+        ${regions.map(r => {
+          const s = sparkline(r);
+          const last = s.vals[s.vals.length-1]||0;
+          const prev = s.vals[s.vals.length-2]||0;
+          const delta = last - prev;
+          const arrow = delta>0?'↑':delta<0?'↓':'→';
+          const arrowColor = delta>0?'var(--red)':delta<0?'var(--green)':'var(--muted)';
+          const trendLabel = s.trendUp ? '↑ Рост' : '↓ Снижение';
+          const trendBg = s.trendUp ? 'var(--red-l)' : 'var(--green-l)';
+          const trendColor = s.trendUp ? 'var(--red)' : 'var(--green)';
+          const mNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+          const monthFrom = last12[0] ? mNames[+last12[0].split('-')[1]-1]+' '+last12[0].split('-')[0] : '';
+          const monthTo = last12[last12.length-1] ? mNames[+last12[last12.length-1].split('-')[1]-1]+' '+last12[last12.length-1].split('-')[0] : '';
+          return `
+            <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;border-top:3px solid ${colors[r]}">
+              <div style="padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:var(--text)">${r}</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px">последние 12 месяцев</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:26px;font-weight:800;color:${colors[r]};line-height:1">${last}</div>
+                  <div style="font-size:12px;color:${arrowColor};font-weight:600;margin-top:2px">${arrow} ${Math.abs(delta)} к пред. мес.</div>
+                </div>
+              </div>
+              <div style="padding:0 12px 6px">
+                <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:56px;display:block">
+                  <defs><linearGradient id="g${r.replace(/\s/g,'')}" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="${colors[r]}" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="${colors[r]}" stop-opacity="0.02"/>
+                  </linearGradient></defs>
+                  <polygon points="${s.area}" fill="url(#g${r.replace(/\s/g,'')})" />
+                  <polyline points="${s.points}" fill="none" stroke="${colors[r]}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+                  <line x1="${s.tx1}" y1="${s.ty1}" x2="${s.tx2}" y2="${s.ty2}" stroke="${s.trendUp?'#A32D2D':'#3B6D11'}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+                </svg>
+              </div>
+              <div style="padding:6px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-top:0.5px solid var(--border);background:var(--bg)">
+                <span style="font-size:10px;color:var(--muted)">${monthFrom}</span>
+                <span style="font-size:11px;font-weight:600;color:${trendColor};background:${trendBg};padding:2px 10px;border-radius:20px">${trendLabel}</span>
+                <span style="font-size:10px;color:var(--muted)">${monthTo}</span>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+}
+
+function printReport() {
+  const content = document.getElementById("printable-report").innerHTML;
+  const w = window.open("","_blank");
+  w.document.write(`<html><head><title>Журнал АДС</title>
+    <style>
+      body{font-family:Arial,sans-serif;font-size:11px;padding:1rem;color:#222}
+      table{width:100%;border-collapse:collapse}
+      th{background:#185FA5;color:#fff;padding:6px 8px;text-align:left;border:1px solid #0C447C;font-size:11px}
+      td{padding:5px 8px;border:1px solid #ddd;vertical-align:top}
+      tr:nth-child(even) td{background:#f7f9fc}
+      @media print{
+        body{padding:0}
+        @page{size:A4 landscape;margin:1cm}
+      }
+    </style>
+  </head><body>${content}</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(), 500);
+}
+
+function exportReportCSV() {
+  const rows = getFiltered();
+  const hdr = ["№","Дата/Время","Регион","Адрес","Кв/под","Содержание заявки","Причина / Выполнено","Время устранения","Источник"];
+  const data = [hdr, ...rows.map(x=>[
+    x.id, x.dt, x.region, x.addr, x.kv, x.desc, x.cause,
+    (x.note||"").replace(/Время устранения:\s*/i,"").split("|")[0].trim(),
+    x.src
+  ])];
+  const csv = data.map(r=>r.map(c=>'"'+String(c||"").replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(csv);
+  a.download = "journal-ads.csv"; a.click();
+}
+
+// ── ИСТОРИЯ ДЕЙСТВИЙ ──
+let actionLog = [];
+
+function getUser() {
+  return localStorage.getItem('ads_username') || '—';
+}
+
+// Показать окно авторизации если имя не задано; callback — что делать после
+let _authCallback = null;
+let _authCancelCallback = null;
+
+function requireUser(onSuccess, onCancel) {
+  if (localStorage.getItem('ads_username')) {
+    onSuccess();
+    return;
+  }
+  _authCallback = onSuccess;
+  _authCancelCallback = onCancel || null;
+  const inp = document.getElementById('authInput');
+  inp.value = '';
+  document.getElementById('authBg').classList.add('open');
+  setTimeout(() => inp.focus(), 50);
+}
+
+function confirmAuth() {
+  const name = document.getElementById('authInput').value.trim();
+  if (!name) { document.getElementById('authInput').style.borderColor='var(--red)'; return; }
+  localStorage.setItem('ads_username', name);
+  document.getElementById('authBg').classList.remove('open');
+  if (_authCallback) { _authCallback(); _authCallback = null; }
+}
+
+function cancelAuth() {
+  document.getElementById('authBg').classList.remove('open');
+  _authCallback = null;
+  if (_authCancelCallback) { _authCancelCallback(); _authCancelCallback = null; }
+}
+
+function logAction(type, details) {
+  const now = new Date();
+  const dt = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+  actionLog.unshift({ dt, user: localStorage.getItem('ads_username') || '—', type, details });
+  if (actionLog.length > 500) actionLog = actionLog.slice(0, 500);
+}
+
+function buildHistory() {
+  const el = document.getElementById('reportHistory');
+  const ACTION_LABELS = { add: 'Добавлена', del: 'Удалена', edit: 'Изменён статус', import: 'Импорт' };
+  const ACTION_CSS = { add: 'h-add', del: 'h-del', edit: 'h-edit', import: 'h-add' };
+  if (!actionLog.length) {
+    el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:14px"><i class="ti ti-history" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.4"></i>История пуста — действия появятся здесь после добавления, удаления или изменения заявок</div>';
+    return;
+  }
+  const rows = actionLog.map(a => `
+    <div class="history-row">
+      <div style="color:var(--muted);font-size:12px">${a.dt}</div>
+      <div><span class="${ACTION_CSS[a.type]||''}">${ACTION_LABELS[a.type]||a.type}</span></div>
+      <div>${a.details}</div>
+      <div style="color:var(--muted);font-size:12px">${a.user}</div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:600">История действий</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">Пользователь: <b>${localStorage.getItem('ads_username')||'—'}</b></span>
+        <button class="btn" onclick="localStorage.removeItem('ads_username');buildHistory()" style="font-size:11px;padding:4px 10px"><i class="ti ti-edit"></i> Сменить</button>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:130px 80px 1fr 120px;background:var(--bg);border-bottom:0.5px solid var(--border)">
+        <div style="padding:8px 12px;font-size:11px;font-weight:600;color:var(--muted)">ДАТА/ВРЕМЯ</div>
+        <div style="padding:8px 12px;font-size:11px;font-weight:600;color:var(--muted)">ДЕЙСТВИЕ</div>
+        <div style="padding:8px 12px;font-size:11px;font-weight:600;color:var(--muted)">ПОДРОБНОСТИ</div>
+        <div style="padding:8px 12px;font-size:11px;font-weight:600;color:var(--muted)">ПОЛЬЗОВАТЕЛЬ</div>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+// ── ЭКСПОРТ ──
+function exportCSV() {
+  const rows = getFiltered();
+  const hdr=["id","dt","region","addr","kv","desc","cause","status","ads","src","note"];
+  const data=[hdr,...rows.map(x=>[x.id,x.dt,x.region,(x.street||x.addr||"")+(x.house?", д."+x.house:""),x.kv,x.desc,x.cause,x.status,x.ads,x.src,x.note])];
+  const csv=data.map(r=>r.map(c=>'"'+String(c||"").replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a=document.createElement("a"); a.href="data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(csv);
+  a.download="ads-journal-"+new Date().toISOString().slice(0,10)+".csv"; a.click();
+}
+
+// ── УТИЛИТЫ ──
+function clearFilters() {
+  ["fRegion","fStatus","fSrc","fCat"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("fDateFrom").value=""; document.getElementById("fDateTo").value="";
+  const fs=document.getElementById("fStreet"); if(fs){ fs.value=""; updateHouseFilter(); }
+  const fh=document.getElementById("fHouse");  if(fh) fh.value="";
+  periodFrom=null; periodTo=null;
+  document.querySelectorAll(".preset-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelector('.preset-btn[onclick*="all"]').classList.add("active");
+  render();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+document.querySelectorAll(".modal-bg").forEach(bg=>bg.addEventListener("click",function(e){if(e.target===this)closeModal(this.id);}));
+
+function showToast(msg) {
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+loadData();
+
+// Делегирование кликов для .prob-row (избегаем проблем с вложенными onclick)
+document.addEventListener('click', function(e) {
+  const row = e.target.closest ? e.target.closest('.prob-row') : null;
+  if (!row) return;
+  const divId = row.getAttribute('data-did');
+  if (divId) toggleCatDetailById(divId);
+});
+</script>
+</body>
+</html>
