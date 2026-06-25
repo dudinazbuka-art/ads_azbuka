@@ -225,6 +225,7 @@ td{padding:9px 12px;vertical-align:middle}
   <table>
     <thead>
       <tr>
+        <th style="width:36px;text-align:center"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)"></th>
         <th style="width:85px">№</th>
         <th style="width:120px">Дата/Время</th>
         <th style="width:95px">Регион</th>
@@ -239,11 +240,20 @@ td{padding:9px 12px;vertical-align:middle}
       </tr>
     </thead>
     <tbody id="tbody">
-      <tr><td colspan="10" class="loader">Загрузка...</td></tr>
+      <tr><td colspan="11" class="loader">Загрузка...</td></tr>
     </tbody>
   </table>
 </div>
-<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:right" id="count-label"></div>
+<div style="font-size:12px;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;align-items:center" id="count-label-row">
+  <div id="delete-bar" style="display:none;align-items:center;gap:10px">
+    <span id="selected-count" style="font-size:13px;color:var(--muted)">0 выбрано</span>
+    <button class="btn" style="background:var(--red-l);color:var(--red);border-color:var(--red)" onclick="deleteSelected()">
+      <i class="ti ti-trash"></i> Удалить выбранные
+    </button>
+    <button class="btn" onclick="clearSelection()"><i class="ti ti-x"></i> Отмена</button>
+  </div>
+  <div id="count-label" style="font-size:12px;color:var(--muted)"></div>
+</div>
 </div>
 
 <!-- ФОРМА ДОБАВЛЕНИЯ -->
@@ -408,7 +418,7 @@ let csvHeaders = [];
 
 function loadData() {
   if (!SCRIPT_URL) return;
-  document.getElementById("tbody").innerHTML = '<tr><td colspan="10" class="loader"><i class="ti ti-loader"></i> Загрузка...</td></tr>';
+  document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="loader"><i class="ti ti-loader"></i> Загрузка...</td></tr>';
   const cbName = 'adsJsonpCb_' + Date.now();
   const script  = document.createElement('script');
   window[cbName] = function(data) {
@@ -417,19 +427,19 @@ function loadData() {
     if (Array.isArray(data)) {
       records = data; populateAddressFilters(); render();
     } else {
-      document.getElementById("tbody").innerHTML = '<tr><td colspan="10" class="empty" style="color:var(--red)">Ошибка загрузки данных</td></tr>';
+      document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Ошибка загрузки данных</td></tr>';
     }
   };
   script.onerror = function() {
     delete window[cbName];
-    document.getElementById("tbody").innerHTML = '<tr><td colspan="10" class="empty" style="color:var(--red)">Ошибка загрузки. Убедитесь что скрипт переопубликован с доступом "Все".</td></tr>';
+    document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Ошибка загрузки. Убедитесь что скрипт переопубликован с доступом "Все".</td></tr>';
   };
   script.src = SCRIPT_URL + '?action=getAll&callback=' + cbName;
   document.body.appendChild(script);
   setTimeout(function() {
     if (window[cbName]) {
       delete window[cbName];
-      document.getElementById("tbody").innerHTML = '<tr><td colspan="10" class="empty" style="color:var(--red)">Таймаут загрузки. Нажмите "Обновить".</td></tr>';
+      document.getElementById("tbody").innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--red)">Таймаут загрузки. Нажмите "Обновить".</td></tr>';
     }
   }, 25000);
 }
@@ -586,11 +596,14 @@ function render() {
   document.getElementById("count-label").textContent = rows.length !== records.length ? `Показано: ${rows.length} из ${records.length}` : `Всего: ${records.length}`;
 
   const tb = document.getElementById("tbody");
-  if (!rows.length) { tb.innerHTML='<tr><td colspan="10" class="empty">Нет заявок по выбранным фильтрам</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML='<tr><td colspan="11" class="empty">Нет заявок по выбранным фильтрам</td></tr>'; return; }
 
   tb.innerHTML = rows.map(x => `
-    <tr onclick="toggleDetail('${x.id}')">
-      <td style="font-weight:500">${x.id}</td>
+    <tr id="row-${x.id}">
+      <td style="text-align:center;width:36px" onclick="event.stopPropagation()">
+        <input type="checkbox" class="row-cb" data-id="${x.id}" onchange="onRowCheck()" style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)">
+      </td>
+      <td style="font-weight:500;cursor:pointer" onclick="toggleDetail('${x.id}')">${x.id}</td>
       <td style="color:var(--muted);font-size:12px">${x.dt}</td>
       <td>${x.region||''}</td>
       <td style="color:var(--muted);font-size:12px">${x.street||x.addr||''}</td>
@@ -603,7 +616,7 @@ function render() {
       <td><span class="cat-badge ${detectCategory(x.desc).css}">${detectCategory(x.desc).icon} ${detectCategory(x.desc).label}</span></td>
     </tr>
     <tr id="dr-${x.id}" style="display:none">
-      <td colspan="10">
+      <td colspan="11">
         <div class="detail-grid">
           <div><div class="dp-label">Содержание заявки</div><div class="dp-val">${x.desc||'—'}</div></div>
           <div><div class="dp-label">Причина аварии</div><div class="dp-val">${x.cause||'—'}</div></div>
@@ -629,6 +642,51 @@ function toggleDetail(id) {
   const open = row.style.display !== "none";
   document.querySelectorAll('[id^="dr-"]').forEach(r=>r.style.display="none");
   if (!open) row.style.display="";
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-cb').forEach(c => c.checked = cb.checked);
+  updateDeleteBar();
+}
+
+function onRowCheck() {
+  const all = document.querySelectorAll('.row-cb');
+  const checked = document.querySelectorAll('.row-cb:checked');
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) {
+    selectAll.checked = all.length > 0 && checked.length === all.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+  }
+  updateDeleteBar();
+}
+
+function updateDeleteBar() {
+  const checked = document.querySelectorAll('.row-cb:checked');
+  const bar = document.getElementById('delete-bar');
+  const countEl = document.getElementById('selected-count');
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    countEl.textContent = checked.length + ' выбрано';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  document.querySelectorAll('.row-cb').forEach(c => c.checked = false);
+  const sa = document.getElementById('selectAll');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  updateDeleteBar();
+}
+
+function deleteSelected() {
+  const ids = [...document.querySelectorAll('.row-cb:checked')].map(c => c.dataset.id);
+  if (!ids.length) return;
+  if (!confirm(`Удалить ${ids.length} заявок(у)? Это действие нельзя отменить.`)) return;
+  records = records.filter(x => !ids.includes(x.id));
+  render();
+  updateDeleteBar();
+  showToast(`Удалено: ${ids.length} заявок`);
 }
 
 async function changeStatus(id, newStatus) {
